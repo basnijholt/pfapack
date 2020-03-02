@@ -38,6 +38,7 @@ setup(
         "License :: OSI Approved :: MIT License",
         "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
+        "Programming Language :: Python :: 3.8",
     ],
     description="Efficient numerical computation of the Pfaffian for dense and banded skew-symmetric matrices.",
     long_description=readme,
