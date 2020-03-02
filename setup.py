@@ -28,7 +28,7 @@ install_requires = ["scipy", "numpy"]
 setup(
     name="pfapack",
     python_requires=">=3.6",
-    version="0.1.1",
+    version="0.1.2.dev0",
     classifiers=[
         "Intended Audience :: Science/Research",
         "Operating System :: OS Independent",
