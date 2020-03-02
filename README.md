@@ -1,6 +1,6 @@
 # `pfapack`: Efficient numerical computation of the Pfaffian for dense and banded skew-symmetric matrices
 
-[Source](https://arxiv.org/abs/1102.3440)
+Code and algorithms are taken from [arXiv:1102.3440](https://arxiv.org/abs/1102.3440) which is authored by [Michael Wimmer](https://michaelwimmer.org/).
 
 [![license](https://img.shields.io/github/license/basnijholt/pfapack)](https://github.com/basnijholt/pfapack/blob/master/LICENSE)
 [![tests](https://github.com/basnijholt/pfapack/workflows/tests/badge.svg)](https://github.com/basnijholt/pfapack/actions?query=workflow%3Atests)
