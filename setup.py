@@ -19,7 +19,7 @@ extras_require = dict(
         "sphinxcontrib.apidoc",  # run sphinx-apidoc when building docs
     ],
     dev=["pre-commit", "bump2version"],
-    testing=["pytest"],
+    testing=["pytest", "pytest-cov", "pytest-mypy", "tox"],
 )
 
 install_requires = ["scipy", "numpy"]
