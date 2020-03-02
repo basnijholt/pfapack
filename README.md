@@ -16,7 +16,7 @@ pip install pfapack
 
 ## Usage
 ```python
-import pfaffian as pf
+from pfapack import pfaffian as pf
 import numpy.matlib
 
 # first real matrices
