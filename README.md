@@ -34,4 +34,4 @@ MIT License
 
 ## Contributions
 - Bas Nijholt
-- Michael Wimmer (author of the algoritms)
+- [Michael Wimmer (author of the algorithms)](https://arxiv.org/abs/1102.3440)
