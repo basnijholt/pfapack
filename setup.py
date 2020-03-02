@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 
 import sys
-from setuptools import find_packages, setup
 
+from setuptools import find_packages, setup
 
 if sys.version_info < (3, 6):
     print("pfapack requires Python 3.6 or above.")
@@ -21,7 +21,7 @@ extras_require = dict(
     dev=["pre-commit", "bump2version"],
 )
 
-install_requires = ["Click", "crossrefapi", "diskcache", "requests", "pyyaml", "tqdm"]
+install_requires = ["scipy", "numpy"]
 
 
 setup(

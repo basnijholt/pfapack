@@ -32,7 +32,7 @@ scientific results, to honor using this software by citing the paper
 accompanying this library: http://arxiv.org/abs/1102.3440
 
 The FORTRAN implementation is derived in parts on the reference
-implementation of LAPACK and BLAS on www.netlib.org. 
+implementation of LAPACK and BLAS on www.netlib.org.
 LAPACK is subject to the following license:
 
 ======================================================================

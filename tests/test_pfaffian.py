@@ -1,60 +1,62 @@
-import pfaffian as pf
 import numpy.linalg
 import numpy.matlib
+import pfaffian as pf
+
 
 def test_pfaffian():
-    #Compare the output of the different Pfaffian routines
-    #and compare to the determinant
+    # Compare the output of the different Pfaffian routines
+    # and compare to the determinant
 
-    #first real matrices
-    A = numpy.matlib.rand(100,100)
-    A = A-A.T
+    # first real matrices
+    A = numpy.matlib.rand(100, 100)
+    A = A - A.T
 
     pfa1 = pf.pfaffian(A)
-    pfa2 = pf.pfaffian(A, method='H')
+    pfa2 = pf.pfaffian(A, method="H")
     pfa3 = pf.pfaffian_schur(A)
-    print pfa1, pfa2, pfa3
+    print(pfa1, pfa2, pfa3)
     deta = numpy.linalg.det(A)
 
-    assert abs((pfa1-pfa2)/pfa1) < 1e-13
-    assert abs((pfa1-pfa3)/pfa1) < 1e-13
-    assert abs((pfa1**2-deta)/deta) < 1e-13
+    assert abs((pfa1 - pfa2) / pfa1) < 1e-13
+    assert abs((pfa1 - pfa3) / pfa1) < 1e-13
+    assert abs((pfa1 ** 2 - deta) / deta) < 1e-13
 
-    #then complex matrices
-    A = numpy.matlib.rand(100,100)+1.j*numpy.matlib.rand(100,100)
-    A = A-A.T
+    # then complex matrices
+    A = numpy.matlib.rand(100, 100) + 1.0j * numpy.matlib.rand(100, 100)
+    A = A - A.T
 
     pfa1 = pf.pfaffian(A)
-    pfa2 = pf.pfaffian(A, method='H')
+    pfa2 = pf.pfaffian(A, method="H")
 
     deta = numpy.linalg.det(A)
 
-    assert abs((pfa1-pfa2)/pfa1) < 1e-13
-    assert abs((pfa1**2-deta)/deta) < 1e-13
+    assert abs((pfa1 - pfa2) / pfa1) < 1e-13
+    assert abs((pfa1 ** 2 - deta) / deta) < 1e-13
+
 
 def test_decompositions():
-    #Test the LTL^T and Householder decompositions
+    # Test the LTL^T and Householder decompositions
 
-    #first real matrices
-    A = numpy.matlib.rand(100,100)
-    A = A-A.T
-
-    T, L, P = pf.skew_LTL(A)
-
-    assert numpy.linalg.norm(P*A*P.T-L*T*L.T)/numpy.linalg.norm(A) < 1e-13
-
-    T, Q = pf.skew_tridiagonalize(A)
-
-    assert numpy.linalg.norm(A-Q*T*Q.T)/numpy.linalg.norm(A) < 1e-13
-
-    #then complex matrices
-    A = numpy.matlib.rand(100,100)+1.0j*numpy.matlib.rand(100,100)
-    A = A-A.T
+    # first real matrices
+    A = numpy.matlib.rand(100, 100)
+    A = A - A.T
 
     T, L, P = pf.skew_LTL(A)
 
-    assert numpy.linalg.norm(P*A*P.T-L*T*L.T)/numpy.linalg.norm(A) < 1e-13
+    assert numpy.linalg.norm(P * A * P.T - L * T * L.T) / numpy.linalg.norm(A) < 1e-13
 
     T, Q = pf.skew_tridiagonalize(A)
 
-    assert numpy.linalg.norm(A-Q*T*Q.T)/numpy.linalg.norm(A) < 1e-13
+    assert numpy.linalg.norm(A - Q * T * Q.T) / numpy.linalg.norm(A) < 1e-13
+
+    # then complex matrices
+    A = numpy.matlib.rand(100, 100) + 1.0j * numpy.matlib.rand(100, 100)
+    A = A - A.T
+
+    T, L, P = pf.skew_LTL(A)
+
+    assert numpy.linalg.norm(P * A * P.T - L * T * L.T) / numpy.linalg.norm(A) < 1e-13
+
+    T, Q = pf.skew_tridiagonalize(A)
+
+    assert numpy.linalg.norm(A - Q * T * Q.T) / numpy.linalg.norm(A) < 1e-13
