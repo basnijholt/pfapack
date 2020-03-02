@@ -5,7 +5,7 @@ import sys  # isort:skip
 
 sys.path.append("..")
 
-import pfaffian as pf  # noqa isort:skip
+from pfapack import pfaffian as pf  # noqa isort:skip
 
 
 def test_pfaffian():
