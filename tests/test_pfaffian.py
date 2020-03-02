@@ -7,6 +7,8 @@ sys.path.append("..")
 
 from pfapack import pfaffian as pf  # noqa isort:skip
 
+EPS = 1e-12
+
 
 def test_pfaffian():
     # Compare the output of the different Pfaffian routines
@@ -22,9 +24,9 @@ def test_pfaffian():
     print(pfa1, pfa2, pfa3)
     deta = numpy.linalg.det(A)
 
-    assert abs((pfa1 - pfa2) / pfa1) < 1e-13
-    assert abs((pfa1 - pfa3) / pfa1) < 1e-13
-    assert abs((pfa1 ** 2 - deta) / deta) < 1e-13
+    assert abs((pfa1 - pfa2) / pfa1) < EPS
+    assert abs((pfa1 - pfa3) / pfa1) < EPS
+    assert abs((pfa1 ** 2 - deta) / deta) < EPS
 
     # then complex matrices
     A = numpy.matlib.rand(100, 100) + 1.0j * numpy.matlib.rand(100, 100)
@@ -35,8 +37,8 @@ def test_pfaffian():
 
     deta = numpy.linalg.det(A)
 
-    assert abs((pfa1 - pfa2) / pfa1) < 1e-13
-    assert abs((pfa1 ** 2 - deta) / deta) < 1e-13
+    assert abs((pfa1 - pfa2) / pfa1) < EPS
+    assert abs((pfa1 ** 2 - deta) / deta) < EPS
 
 
 def test_decompositions():
@@ -48,11 +50,11 @@ def test_decompositions():
 
     T, L, P = pf.skew_LTL(A)
 
-    assert numpy.linalg.norm(P * A * P.T - L * T * L.T) / numpy.linalg.norm(A) < 1e-13
+    assert numpy.linalg.norm(P * A * P.T - L * T * L.T) / numpy.linalg.norm(A) < EPS
 
     T, Q = pf.skew_tridiagonalize(A)
 
-    assert numpy.linalg.norm(A - Q * T * Q.T) / numpy.linalg.norm(A) < 1e-13
+    assert numpy.linalg.norm(A - Q * T * Q.T) / numpy.linalg.norm(A) < EPS
 
     # then complex matrices
     A = numpy.matlib.rand(100, 100) + 1.0j * numpy.matlib.rand(100, 100)
@@ -60,8 +62,8 @@ def test_decompositions():
 
     T, L, P = pf.skew_LTL(A)
 
-    assert numpy.linalg.norm(P * A * P.T - L * T * L.T) / numpy.linalg.norm(A) < 1e-13
+    assert numpy.linalg.norm(P * A * P.T - L * T * L.T) / numpy.linalg.norm(A) < EPS
 
     T, Q = pf.skew_tridiagonalize(A)
 
-    assert numpy.linalg.norm(A - Q * T * Q.T) / numpy.linalg.norm(A) < 1e-13
+    assert numpy.linalg.norm(A - Q * T * Q.T) / numpy.linalg.norm(A) < EPS
