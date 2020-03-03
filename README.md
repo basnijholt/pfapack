@@ -29,6 +29,21 @@ pfa3 = pf.pfaffian_schur(A)
 print(pfa1, pfa2, pfa3)
 ```
 
+## Citing
+If you have used `pfapack` in your research, please cite it using the following `bib` entry:
+```
+@article{wimmer2012algorithm,
+  title={Efficient numerical computation of the pfaffian for dense and banded skew-symmetric matrices},
+  author={Michael Wimmer},
+  journal={ACM Transactions on Mathematical Software (TOMS)},
+  volume={38},
+  number={4},
+  pages={1--17},
+  year={2012},
+  publisher={ACM New York, NY, USA}
+}
+```
+
 ## License
 MIT License
 
