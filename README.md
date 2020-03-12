@@ -10,6 +10,12 @@ Code and algorithms are taken from [arXiv:1102.3440](https://arxiv.org/abs/1102.
 [![PyPI - Python Version](https://img.shields.io/pypi/pyversions/pfapack)](https://pypi.org/project/pfapack/)
 
 ### Install
+Recommended way (because it includes faster C/FORTRAN bindings)
+```bash
+conda install pfapack
+```
+
+Alternatively use
 ```bash
 pip install pfapack
 ```
@@ -19,7 +25,6 @@ pip install pfapack
 from pfapack import pfaffian as pf
 import numpy.matlib
 
-# first real matrices
 A = numpy.matlib.rand(100, 100)
 A = A - A.T
 pfa1 = pf.pfaffian(A)
@@ -27,6 +32,16 @@ pfa2 = pf.pfaffian(A, method="H")
 pfa3 = pf.pfaffian_schur(A)
 
 print(pfa1, pfa2, pfa3)
+```
+
+If installed with `conda`, C/FORTRAN code is included with Python bindings, use it like:
+```python
+from pfapack.ctypes import pfaffian as cpf
+
+pfa1 = cpf(A)
+pfa2 = cpf(A, method="H")
+
+print(pfa1, pfa2)
 ```
 
 ## Citing
