@@ -1,16 +1,16 @@
+# PFAPACK wrapper of the C library.
+
+# This module wraps
+# skpfa.o skpf10.o
+# and not yet
+# skbpfa.o skbpf10.o sktrf.o sktrd.o skbtrd.o
+
 import ctypes
 
 import numpy as np
 from numpy.ctypeslib import ndpointer
 
 lib = ctypes.CDLL("libcpfapack.so")
-
-# Note
-# ----
-# This module only wraps
-# skpfa.o skpf10.o
-# and not yet
-# skbpfa.o skbpf10.o sktrf.o sktrd.o skbtrd.o
 
 
 def _init(which):
