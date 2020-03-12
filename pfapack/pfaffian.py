@@ -1,6 +1,5 @@
 """A package for computing Pfaffians"""
 
-
 import cmath
 import math
 

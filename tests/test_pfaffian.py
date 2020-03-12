@@ -1,11 +1,21 @@
+import numpy as np
 import numpy.linalg
 import numpy.matlib
+import pytest
 
 import sys  # isort:skip
 
 sys.path.append("..")
 
 from pfapack import pfaffian as pf  # noqa isort:skip
+
+try:
+    from pfapack.ctypes import pfaffian as cpfaffian
+
+    with_ctypes = True
+except OSError:
+    with_ctypes = False
+
 
 EPS = 1e-12
 
@@ -67,3 +77,14 @@ def test_decompositions():
     T, Q = pf.skew_tridiagonalize(A)
 
     assert numpy.linalg.norm(A - Q * T * Q.T) / numpy.linalg.norm(A) < EPS
+
+
+@pytest.mark.skipif(not with_ctypes, reason="the libs might not be installed")
+def test_ctypes():
+    A = numpy.matlib.rand(100, 100)
+    A = A - A.T
+    pf_a = cpfaffian(A, uplo="L")
+    pf_a2 = cpfaffian(A, uplo="L", avoid_overflow=True)
+
+    np.testing.assert_almost_equal(pf_a / pf_a2, 1)
+    np.testing.assert_almost_equal(pf_a / pf.pfaffian(A), 1)
