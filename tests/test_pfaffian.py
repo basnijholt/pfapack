@@ -81,10 +81,21 @@ def test_decompositions():
 
 @pytest.mark.skipif(not with_ctypes, reason="the libs might not be installed")
 def test_ctypes():
-    A = numpy.matlib.rand(100, 100)
-    A = A - A.T
-    pf_a = cpfaffian(A, uplo="L")
-    pf_a2 = cpfaffian(A, uplo="L", avoid_overflow=True)
+    for method in ("P", "H"):
+        # first real matrices
+        A = numpy.matlib.rand(100, 100)
+        A = A - A.T
+        pf_a = cpfaffian(A, uplo="L", method=method)
+        pf_a2 = cpfaffian(A, uplo="L", avoid_overflow=True, method=method)
 
-    np.testing.assert_almost_equal(pf_a / pf_a2, 1)
-    np.testing.assert_almost_equal(pf_a / pf.pfaffian(A), 1)
+        np.testing.assert_almost_equal(pf_a / pf_a2, 1)
+        np.testing.assert_almost_equal(pf_a / pf.pfaffian(A), 1)
+
+        # then complex matrices
+        A = numpy.matlib.rand(100, 100) + 1.0j * numpy.matlib.rand(100, 100)
+        A = A - A.T
+        pf_a = cpfaffian(A, uplo="L", method=method)
+        pf_a2 = cpfaffian(A, uplo="L", avoid_overflow=True, method=method)
+
+        np.testing.assert_almost_equal(pf_a / pf_a2, 1)
+        np.testing.assert_almost_equal(pf_a / pf.pfaffian(A), 1)
