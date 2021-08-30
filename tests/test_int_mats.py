@@ -23,33 +23,36 @@ def int_rand_mat2(n):
 
 
 def test_integer_matrices():
-    for _ in np.arange(2, 12, 2):
-        A = int_rand_mat(6)
+    for i in range(2, 12, 2):
+        A = int_rand_mat(i)
         H = pf.pfaffian(A, method="H")
         P = pf.pfaffian(A, method="P")
         result_H = np.abs(H ** 2 - np.linalg.det(A))
         result_P = np.abs(P ** 2 - np.linalg.det(A))
-        assert result_H < 1e-10
-        assert result_P < 1e-10
+        eps = 10 ** (-i)
+        assert result_H < eps
+        assert result_P < eps
 
 
 def test_real_matrices():
-    for _ in np.arange(2, 12, 2):
-        A = float_rand_mat(6)
+    for i in range(2, 12, 2):
+        A = float_rand_mat(i)
         H = pf.pfaffian(A, method="H")
         P = pf.pfaffian(A, method="P")
         result_H = np.abs(H ** 2 - np.linalg.det(A))
         result_P = np.abs(P ** 2 - np.linalg.det(A))
-        assert result_H < 1e-10
-        assert result_P < 1e-10
+        eps = 10 ** (-i)
+        assert result_H < eps
+        assert result_P < eps
 
 
 def test_complex_matrices():
-    for _ in np.arange(2, 12, 2):
-        A = complex_rand_mat(6)
+    for i in range(2, 12, 2):
+        A = complex_rand_mat(i)
         H = pf.pfaffian(A, method="H")
         P = pf.pfaffian(A, method="P")
         result_H = np.abs(H ** 2 - np.linalg.det(A))
         result_P = np.abs(P ** 2 - np.linalg.det(A))
-        assert result_H < 1e-10
-        assert result_P < 1e-10
+        eps = 10 ** (-i)
+        assert result_H < eps
+        assert result_P < eps
