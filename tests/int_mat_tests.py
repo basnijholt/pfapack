@@ -22,27 +22,34 @@ def int_rand_mat2(n):
     return A - A.T
 
 
-print("Testing integer matrices...")
-for i in np.arange(2, 12, 2):
-    A = int_rand_mat(6)
-    H = pf.pfaffian(A, method="H")
-    P = pf.pfaffian(A, method="P")
-    print("Method H: ", H ** 2 - np.linalg.det(A))
-    print("Method P: ", P ** 2 - np.linalg.det(A))
-
-print("Testing real matrices...")
-for i in np.arange(2, 12, 2):
-    A = float_rand_mat(6)
-    H = pf.pfaffian(A, method="H")
-    P = pf.pfaffian(A, method="P")
-    print("Method H: ", H ** 2 - np.linalg.det(A))
-    print("Method P: ", P ** 2 - np.linalg.det(A))
+def test_integer_matrices():
+    for _ in np.arange(2, 12, 2):
+        A = int_rand_mat(6)
+        H = pf.pfaffian(A, method="H")
+        P = pf.pfaffian(A, method="P")
+        result_H = np.abs(H ** 2 - np.linalg.det(A))
+        result_P = np.abs(P ** 2 - np.linalg.det(A))
+        assert result_H < 1e-10
+        assert result_P < 1e-10
 
 
-print("Testing complex matrices...")
-for i in np.arange(2, 12, 2):
-    A = complex_rand_mat(6)
-    H = pf.pfaffian(A, method="H")
-    P = pf.pfaffian(A, method="P")
-    print("Method H: ", H ** 2 - np.linalg.det(A))
-    print("Method P: ", P ** 2 - np.linalg.det(A))
+def test_real_matrices():
+    for _ in np.arange(2, 12, 2):
+        A = float_rand_mat(6)
+        H = pf.pfaffian(A, method="H")
+        P = pf.pfaffian(A, method="P")
+        result_H = np.abs(H ** 2 - np.linalg.det(A))
+        result_P = np.abs(P ** 2 - np.linalg.det(A))
+        assert result_H < 1e-10
+        assert result_P < 1e-10
+
+
+def test_complex_matrices():
+    for _ in np.arange(2, 12, 2):
+        A = complex_rand_mat(6)
+        H = pf.pfaffian(A, method="H")
+        P = pf.pfaffian(A, method="P")
+        result_H = np.abs(H ** 2 - np.linalg.det(A))
+        result_P = np.abs(P ** 2 - np.linalg.det(A))
+        assert result_H < 1e-10
+        assert result_P < 1e-10
