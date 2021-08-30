@@ -37,7 +37,7 @@ def householder_real(x):
             v[0] += norm_x
             alpha = -norm_x
 
-        v /= np.linalg.norm(v)
+        v = v / np.linalg.norm(v)
 
         return (v, 2, alpha)
 
@@ -259,8 +259,13 @@ def pfaffian_LTL(A, overwrite_a=False):
     # Check if it's skew-symmetric
     assert abs((A + A.T).max()) < 1e-14
 
-    n = A.shape[0]
-    A = np.asarray(A)  # the slice views work only properly for arrays
+    n, m = A.shape
+    #type check to fix problems with integer numbers
+    dtype = type(A[0, 0])
+    if dtype != np.complex128:
+        # the slice views work only properly for arrays
+        A = np.asarray(A, dtype=float)
+
 
     # Quick return if possible
     if n % 2 == 1:
@@ -294,14 +299,14 @@ def pfaffian_LTL(A, overwrite_a=False):
         # Now form the Gauss vector
         if A[k + 1, k] != 0.0:
             tau = A[k, k + 2 :].copy()
-            tau /= A[k, k + 1]
+            tau = tau / A[k, k + 1]
 
             pfaffian_val *= A[k, k + 1]
 
             if k + 2 < n:
                 # Update the matrix block A(k+2:,k+2)
-                A[k + 2 :, k + 2 :] += np.outer(tau, A[k + 2 :, k + 1])
-                A[k + 2 :, k + 2 :] -= np.outer(A[k + 2 :, k + 1], tau)
+                A[k + 2 :, k + 2 :] = A[k + 2 :, k + 2 :] + np.outer(tau, A[k + 2 :, k + 1])
+                A[k + 2 :, k + 2 :] = A[k + 2 :, k + 2 :] - np.outer(A[k + 2 :, k + 1], tau)
         else:
             # if we encounter a zero on the super/subdiagonal, the
             # Pfaffian is 0
@@ -329,6 +334,12 @@ def pfaffian_householder(A, overwrite_a=False):
     assert abs((A + A.T).max()) < 1e-14
 
     n = A.shape[0]
+
+    # type check to fix problems with integer numbers
+    dtype = type(A[0, 0])
+    if dtype != np.complex128:
+        # the slice views work only properly for arrays
+        A = np.asarray(A, dtype=float)
 
     # Quick return if possible
     if n % 2 == 1:
@@ -359,7 +370,7 @@ def pfaffian_householder(A, overwrite_a=False):
 
         # Update the matrix block A(i+1:N,i+1:N)
         w = tau * np.dot(A[i + 1 :, i + 1 :], v.conj())
-        A[i + 1 :, i + 1 :] += np.outer(v, w) - np.outer(w, v)
+        A[i + 1 :, i + 1 :] = A[i + 1 :, i + 1 :] + np.outer(v, w) - np.outer(w, v)
 
         if tau != 0:
             pfaffian_val *= 1 - tau
