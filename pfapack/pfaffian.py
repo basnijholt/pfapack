@@ -71,7 +71,7 @@ def householder_complex(x):
 
 
 def skew_tridiagonalize(A, overwrite_a=False, calc_q=True):
-    """ T, Q = skew_tridiagonalize(A, overwrite_a, calc_q=True)
+    """T, Q = skew_tridiagonalize(A, overwrite_a, calc_q=True)
 
     or
 
@@ -134,7 +134,7 @@ def skew_tridiagonalize(A, overwrite_a=False, calc_q=True):
 
 
 def skew_LTL(A, overwrite_a=False, calc_L=True, calc_P=True):
-    """ T, L, P = skew_LTL(A, overwrite_a, calc_q=True)
+    """T, L, P = skew_LTL(A, overwrite_a, calc_q=True)
 
     Bring a real or complex skew-symmetric matrix (A=-A^T) into
     tridiagonal form T (with zero diagonal) with a lower unit
@@ -225,7 +225,7 @@ def skew_LTL(A, overwrite_a=False, calc_L=True, calc_P=True):
 
 
 def pfaffian(A, overwrite_a=False, method="P"):
-    """ pfaffian(A, overwrite_a=False, method='P')
+    """pfaffian(A, overwrite_a=False, method='P')
 
     Compute the Pfaffian of a real or complex skew-symmetric
     matrix A (A=-A^T). If overwrite_a=True, the matrix A
@@ -247,7 +247,7 @@ def pfaffian(A, overwrite_a=False, method="P"):
 
 
 def pfaffian_LTL(A, overwrite_a=False):
-    """ pfaffian_LTL(A, overwrite_a=False)
+    """pfaffian_LTL(A, overwrite_a=False)
 
     Compute the Pfaffian of a real or complex skew-symmetric
     matrix A (A=-A^T). If overwrite_a=True, the matrix A
@@ -260,12 +260,11 @@ def pfaffian_LTL(A, overwrite_a=False):
     assert abs((A + A.T).max()) < 1e-14
 
     n, m = A.shape
-    #type check to fix problems with integer numbers
+    # type check to fix problems with integer numbers
     dtype = type(A[0, 0])
     if dtype != np.complex128:
         # the slice views work only properly for arrays
         A = np.asarray(A, dtype=float)
-
 
     # Quick return if possible
     if n % 2 == 1:
@@ -305,8 +304,12 @@ def pfaffian_LTL(A, overwrite_a=False):
 
             if k + 2 < n:
                 # Update the matrix block A(k+2:,k+2)
-                A[k + 2 :, k + 2 :] = A[k + 2 :, k + 2 :] + np.outer(tau, A[k + 2 :, k + 1])
-                A[k + 2 :, k + 2 :] = A[k + 2 :, k + 2 :] - np.outer(A[k + 2 :, k + 1], tau)
+                A[k + 2 :, k + 2 :] = A[k + 2 :, k + 2 :] + np.outer(
+                    tau, A[k + 2 :, k + 1]
+                )
+                A[k + 2 :, k + 2 :] = A[k + 2 :, k + 2 :] - np.outer(
+                    A[k + 2 :, k + 1], tau
+                )
         else:
             # if we encounter a zero on the super/subdiagonal, the
             # Pfaffian is 0
@@ -316,7 +319,7 @@ def pfaffian_LTL(A, overwrite_a=False):
 
 
 def pfaffian_householder(A, overwrite_a=False):
-    """ pfaffian(A, overwrite_a=False)
+    """pfaffian(A, overwrite_a=False)
 
     Compute the Pfaffian of a real or complex skew-symmetric
     matrix A (A=-A^T). If overwrite_a=True, the matrix A
