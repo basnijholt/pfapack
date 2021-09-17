@@ -1,6 +1,6 @@
 # Making release
 
-This document guides a contributor through creating a release of `adaptive_scheduler`.
+This document guides a contributor through creating a release of `pfapack`.
 
 
 ## Preflight checks

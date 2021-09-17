@@ -35,7 +35,7 @@ def get_version_and_cmdclass(package_name):
     return module.__version__, module.cmdclass
 
 
-version, cmdclass = get_version_and_cmdclass("adaptive_scheduler")
+version, cmdclass = get_version_and_cmdclass("pfapack")
 
 
 setup(
