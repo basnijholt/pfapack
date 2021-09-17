@@ -4,8 +4,8 @@ import sys
 
 from setuptools import find_packages, setup
 
-if sys.version_info < (3, 6):
-    print("pfapack requires Python 3.6 or above.")
+if sys.version_info < (3, 7):
+    print("pfapack requires Python 3.7 or above.")
     sys.exit(1)
 
 with open("README.md") as f:
@@ -51,9 +51,9 @@ setup(
         "Topic :: Scientific/Engineering",
         "Topic :: Utilities",
         "License :: OSI Approved :: MIT License",
-        "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
+        "Programming Language :: Python :: 3.9",
     ],
     description="Efficient numerical computation of the Pfaffian for dense and banded skew-symmetric matrices.",
     long_description=readme,
