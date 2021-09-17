@@ -1,2 +1,4 @@
 # pfapack Python package
-__version__ = "0.2.1"
+from pfapack._version import __version__
+
+__all__ = ["__version__"]

@@ -25,10 +25,24 @@ extras_require = dict(
 install_requires = ["scipy", "numpy"]
 
 
+def get_version_and_cmdclass(package_name):
+    import os
+    from importlib.util import module_from_spec, spec_from_file_location
+
+    spec = spec_from_file_location("version", os.path.join(package_name, "_version.py"))
+    module = module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module.__version__, module.cmdclass
+
+
+version, cmdclass = get_version_and_cmdclass("adaptive_scheduler")
+
+
 setup(
     name="pfapack",
     python_requires=">=3.6",
-    version="0.2.1",
+    version=version,
+    cmdclass=cmdclass,
     classifiers=[
         "Intended Audience :: Science/Research",
         "Operating System :: OS Independent",
