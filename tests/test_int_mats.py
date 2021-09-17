@@ -5,7 +5,7 @@ import pfapack.pfaffian as pf
 
 
 def int_rand_mat(n):
-    A = np.matrix(list(map(np.vectorize(round), np.random.rand(n, n))))
+    A = np.array(list(map(np.vectorize(round), np.random.rand(n, n))))
     return A - A.T
 
 
@@ -20,7 +20,7 @@ def complex_rand_mat(n):
 
 
 def int_rand_mat2(n):
-    A = np.matrix(list(map(np.around, np.random.rand(n, n))))
+    A = np.array(list(map(np.around, np.random.rand(n, n))))
     return A - A.T
 
 
