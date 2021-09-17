@@ -18,7 +18,7 @@ extras_require = dict(
         "m2r",  # markdown support
         "sphinxcontrib.apidoc",  # run sphinx-apidoc when building docs
     ],
-    dev=["pre-commit", "bump2version"],
+    dev=["pre-commit"],
     testing=["pytest", "pytest-cov", "pytest-mypy", "tox"],
 )
 

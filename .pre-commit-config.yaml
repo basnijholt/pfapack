@@ -3,9 +3,7 @@ repos:
     rev: v4.0.1
     hooks:
     -   id: end-of-file-fixer
-        exclude: '.bumpversion.cfg'
     -   id: trailing-whitespace
-        exclude: '.bumpversion.cfg'
     -   id: check-docstring-first
     -   id: check-yaml
     -   id: debug-statements
@@ -35,6 +33,4 @@ repos:
     rev: v4.0.1
     hooks:
     - id: end-of-file-fixer
-      exclude: '.bumpversion.cfg'
     - id: trailing-whitespace
-      exclude: '.bumpversion.cfg'
