@@ -40,7 +40,7 @@ version, cmdclass = get_version_and_cmdclass("pfapack")
 
 setup(
     name="pfapack",
-    python_requires=">=3.6",
+    python_requires=">=3.7",
     version=version,
     cmdclass=cmdclass,
     classifiers=[
