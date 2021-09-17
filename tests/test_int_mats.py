@@ -1,4 +1,6 @@
 import numpy as np
+import pytest
+
 import pfapack.pfaffian as pf
 
 
@@ -22,37 +24,17 @@ def int_rand_mat2(n):
     return A - A.T
 
 
-def test_integer_matrices():
-    for i in range(2, 12, 2):
-        A = int_rand_mat(i)
+@pytest.mark.parametrize(
+    "f_matrix",
+    [int_rand_mat, float_rand_mat, complex_rand_mat, int_rand_mat2],
+)
+def test_matrices(f_matrix):
+    for i in range(40, 200, 20):
+        A = f_matrix(i)
         H = pf.pfaffian(A, method="H")
         P = pf.pfaffian(A, method="P")
-        result_H = np.abs(H ** 2 - np.linalg.det(A))
-        result_P = np.abs(P ** 2 - np.linalg.det(A))
-        eps = 10 ** (-i)
-        assert result_H < eps
-        assert result_P < eps
-
-
-def test_real_matrices():
-    for i in range(2, 12, 2):
-        A = float_rand_mat(i)
-        H = pf.pfaffian(A, method="H")
-        P = pf.pfaffian(A, method="P")
-        result_H = np.abs(H ** 2 - np.linalg.det(A))
-        result_P = np.abs(P ** 2 - np.linalg.det(A))
-        eps = 10 ** (-i)
-        assert result_H < eps
-        assert result_P < eps
-
-
-def test_complex_matrices():
-    for i in range(2, 12, 2):
-        A = complex_rand_mat(i)
-        H = pf.pfaffian(A, method="H")
-        P = pf.pfaffian(A, method="P")
-        result_H = np.abs(H ** 2 - np.linalg.det(A))
-        result_P = np.abs(P ** 2 - np.linalg.det(A))
-        eps = 10 ** (-i)
-        assert result_H < eps
-        assert result_P < eps
+        da = np.linalg.det(A)
+        result_H = np.log10(H ** 2) - np.log10(da)
+        result_P = np.log10(P ** 2) - np.log10(da)
+        assert result_H < 1e-11
+        assert result_P < 1e-11
