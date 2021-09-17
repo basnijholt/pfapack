@@ -5,22 +5,22 @@ import pfapack.pfaffian as pf
 
 
 def int_rand_mat(n):
-    A = np.matrix(list(map(np.vectorize(round), np.random.rand(n, n) * 10)))
+    A = np.matrix(list(map(np.vectorize(round), np.random.rand(n, n))))
     return A - A.T
 
 
 def float_rand_mat(n):
-    A = np.random.rand(n, n) * 10
+    A = np.random.rand(n, n)
     return A - A.T
 
 
 def complex_rand_mat(n):
-    A = np.random.rand(n, n) * 10 + np.random.rand(n, n) * 10j
+    A = np.random.rand(n, n) + 1j * np.random.rand(n, n)
     return A - A.T
 
 
 def int_rand_mat2(n):
-    A = np.matrix(list(map(np.around, np.random.rand(n, n) * 10)))
+    A = np.matrix(list(map(np.around, np.random.rand(n, n))))
     return A - A.T
 
 
