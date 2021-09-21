@@ -12,7 +12,7 @@ Code and algorithms are taken from [arXiv:1102.3440](https://arxiv.org/abs/1102.
 ### Install
 Recommended way (because it includes faster C/FORTRAN bindings)
 ```bash
-conda install pfapack
+conda install -c conda-forge pfapack
 ```
 
 Alternatively use
