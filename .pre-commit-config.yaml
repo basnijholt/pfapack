@@ -1,6 +1,6 @@
 repos:
 -   repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.0.1
+    rev: v4.5.0
     hooks:
     -   id: end-of-file-fixer
     -   id: trailing-whitespace
@@ -9,11 +9,11 @@ repos:
     -   id: debug-statements
     -   id: check-ast
 -   repo: https://github.com/ambv/black
-    rev: 21.9b0
+    rev: 23.11.0
     hooks:
     - id: black
 -   repo: https://github.com/asottile/pyupgrade
-    rev: v2.26.0
+    rev: v3.15.0
     hooks:
     -   id: pyupgrade
         args: ['--py36-plus']
@@ -22,15 +22,15 @@ repos:
     hooks:
     -   id: seed-isort-config
 -   repo: https://github.com/pre-commit/mirrors-isort
-    rev: v5.9.3
+    rev: v5.10.1
     hooks:
     -   id: isort
--   repo: https://gitlab.com/pycqa/flake8
-    rev: 3.9.2
+-   repo: https://github.com/pycqa/flake8
+    rev: 6.1.0
     hooks:
     -   id: flake8
 -   repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.0.1
+    rev: v4.5.0
     hooks:
     - id: end-of-file-fixer
     - id: trailing-whitespace

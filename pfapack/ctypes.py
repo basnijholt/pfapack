@@ -39,7 +39,7 @@ def from_exp(x, exp):
     """
     assert np.isclose(np.imag(exp), 0.0)
     try:
-        return x * 10 ** exp
+        return x * 10**exp
     except OverflowError:
         return x * np.inf
 

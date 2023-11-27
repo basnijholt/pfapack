@@ -34,7 +34,7 @@ def test_matrices(f_matrix):
         H = pf.pfaffian(A, method="H")
         P = pf.pfaffian(A, method="P")
         da = np.linalg.det(A)
-        result_H = np.log10(H ** 2) - np.log10(da)
-        result_P = np.log10(P ** 2) - np.log10(da)
+        result_H = np.log10(H**2) - np.log10(da)
+        result_P = np.log10(P**2) - np.log10(da)
         assert result_H < 1e-11
         assert result_P < 1e-11
