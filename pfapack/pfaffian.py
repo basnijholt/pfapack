@@ -2,6 +2,7 @@
 
 import cmath
 import math
+from typing import Union
 
 import numpy as np
 import scipy.linalg as la
@@ -246,74 +247,77 @@ def pfaffian(A, overwrite_a=False, method="P"):
         return pfaffian_householder(A, overwrite_a)
 
 
-def pfaffian_LTL(A, overwrite_a=False):
-    """pfaffian_LTL(A, overwrite_a=False)
-
+def pfaffian_LTL(__matrix, overwrite_input=False) -> Union[float, complex]:
+    r"""
     Compute the Pfaffian of a real or complex skew-symmetric
-    matrix A (A=-A^T). If overwrite_a=True, the matrix A
+    matrix A (A=-A^T). If overwrite_input=True, the input matrix
     is overwritten in the process. This function uses
     the Parlett-Reid algorithm.
+
+    :param __matrix: Matrix to compute the Pfaffian of
+    :type __matrix: np.ndarray
+    :param overwrite_input: Whether to overwrite the input matrix
+    :type overwrite_input: bool
+    :return: Pfaffian of the matrix
+    :rtype: Union[float, complex]
     """
+    if overwrite_input:
+        matrix = __matrix
+    else:
+        matrix = __matrix.copy()
     # Check if matrix is square
-    assert A.shape[0] == A.shape[1] > 0
+    assert matrix.shape[0] == matrix.shape[1] > 0
     # Check if it's skew-symmetric
-    assert abs((A + A.T).max()) < 1e-14
+    assert np.abs((matrix + matrix.T).max()) < 1e-14
 
-    n, m = A.shape
-    # type check to fix problems with integer numbers
-    dtype = type(A[0, 0])
-    if dtype != np.complex128:
-        # the slice views work only properly for arrays
-        A = np.asarray(A, dtype=float)
-
+    n, m = matrix.shape
     # Quick return if possible
     if n % 2 == 1:
-        return 0
-
-    if not overwrite_a:
-        A = A.copy()
-
+        return 0.0
+    matrix = matrix.astype(np.complex128)
     pfaffian_val = 1.0
 
     for k in range(0, n - 1, 2):
         # First, find the largest entry in A[k+1:,k] and
         # permute it to A[k+1,k]
-        kp = k + 1 + np.abs(A[k + 1 :, k]).argmax()
+        kp = k + 1 + np.abs(matrix[k + 1:, k]).argmax()
 
         # Check if we need to pivot
         if kp != k + 1:
             # interchange rows k+1 and kp
-            temp = A[k + 1, k:].copy()
-            A[k + 1, k:] = A[kp, k:]
-            A[kp, k:] = temp
+            temp = matrix[k + 1, k:].copy()
+            matrix[k + 1, k:] = matrix[kp, k:]
+            matrix[kp, k:] = temp
 
             # Then interchange columns k+1 and kp
-            temp = A[k:, k + 1].copy()
-            A[k:, k + 1] = A[k:, kp]
-            A[k:, kp] = temp
+            temp = matrix[k:, k + 1].copy()
+            matrix[k:, k + 1] = matrix[k:, kp]
+            matrix[k:, kp] = temp
 
             # every interchange corresponds to a "-" in det(P)
             pfaffian_val *= -1
 
-        # Now form the Gauss vector
-        if A[k + 1, k] != 0.0:
-            tau = A[k, k + 2 :].copy()
-            tau = tau / A[k, k + 1]
-
-            pfaffian_val *= A[k, k + 1]
+        if np.isclose(matrix[k + 1, k], 0.0):
+            # if we encounter a zero on the super/subdiagonal, the Pfaffian is 0
+            return 0.0
+        else:
+            # Now form the Gauss vector
+            tau = matrix[k, k + 2:].copy()
+            tau = np.divide(
+                tau, matrix[k, k + 1],
+                out=np.zeros_like(tau),
+                where=not np.isclose(matrix[k, k + 1], 0.0)
+            )
+            pfaffian_val *= matrix[k, k + 1]
 
             if k + 2 < n:
                 # Update the matrix block A(k+2:,k+2)
-                A[k + 2 :, k + 2 :] = A[k + 2 :, k + 2 :] + np.outer(
-                    tau, A[k + 2 :, k + 1]
+                matrix[k + 2:, k + 2:] = matrix[k + 2:, k + 2:] + np.outer(
+                    tau, matrix[k + 2:, k + 1]
                 )
-                A[k + 2 :, k + 2 :] = A[k + 2 :, k + 2 :] - np.outer(
-                    A[k + 2 :, k + 1], tau
+                matrix[k + 2:, k + 2:] = matrix[k + 2:, k + 2:] - np.outer(
+                    matrix[k + 2:, k + 1], tau
                 )
-        else:
-            # if we encounter a zero on the super/subdiagonal, the
-            # Pfaffian is 0
-            return 0.0
 
     return pfaffian_val
 
