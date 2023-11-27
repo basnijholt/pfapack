@@ -33,5 +33,5 @@ jobs:
       - name: Test
         run: tox
       - name: Upload coverage to Codecov
-        if: matrix.os == 'ubuntu-latest' and matrix.python-version == '3.11'
+        if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.11'
         uses: codecov/codecov-action@v3
