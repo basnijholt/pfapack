@@ -36,7 +36,7 @@ def test_pfaffian():
 
     assert abs((pfa1 - pfa2) / pfa1) < EPS
     assert abs((pfa1 - pfa3) / pfa1) < EPS
-    assert abs((pfa1 ** 2 - deta) / deta) < EPS
+    assert abs((pfa1**2 - deta) / deta) < EPS
 
     # then complex matrices
     A = numpy.matlib.rand(100, 100) + 1.0j * numpy.matlib.rand(100, 100)
@@ -48,7 +48,7 @@ def test_pfaffian():
     deta = numpy.linalg.det(A)
 
     assert abs((pfa1 - pfa2) / pfa1) < EPS
-    assert abs((pfa1 ** 2 - deta) / deta) < EPS
+    assert abs((pfa1**2 - deta) / deta) < EPS
 
 
 def test_decompositions():
