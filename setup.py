@@ -2,7 +2,8 @@
 
 import sys
 
-from setuptools import find_packages, setup
+from setuptools import find_packages, setup, Extension
+from Cython.Build import cythonize
 
 if sys.version_info < (3, 7):
     print("pfapack requires Python 3.7 or above.")
@@ -37,6 +38,9 @@ def get_version_and_cmdclass(package_name):
 
 version, cmdclass = get_version_and_cmdclass("pfapack")
 
+# cython
+extensions = [
+    Extension("pfapack.pfaffian_cy", ["pfapack/pfaffian_cy.pyx"])]
 
 setup(
     name="pfapack",
@@ -66,4 +70,5 @@ setup(
     install_requires=install_requires,
     extras_require=extras_require,
     zip_safe=False,
+    ext_modules=cythonize(extensions, compiler_directives={'language_level': "3"}),
 )
