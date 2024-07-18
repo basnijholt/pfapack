@@ -7,6 +7,9 @@ __pycache__/
 *.so
 *.c
 
+# webpages
+*.html
+
 # Distribution / packaging
 .Python
 build/
