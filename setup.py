@@ -2,6 +2,7 @@
 
 import sys
 
+import numpy
 from setuptools import find_packages, setup, Extension
 from Cython.Build import cythonize
 
@@ -40,7 +41,7 @@ version, cmdclass = get_version_and_cmdclass("pfapack")
 
 # cython
 extensions = [
-    Extension("pfapack.pfaffian_cy", ["pfapack/pfaffian_cy.pyx"])]
+    Extension("pfapack.pfaffian_cy", ["pfapack/pfaffian_cy.pyx"], include_dirs=[numpy.get_include()])]
 
 setup(
     name="pfapack",

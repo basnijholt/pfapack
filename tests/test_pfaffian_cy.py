@@ -25,7 +25,7 @@ def test_pfaffian():
     # and compare to the determinant
 
     # first real matrices
-    A = numpy.matlib.rand(100, 100)
+    A = numpy.matlib.rand(100, 100) # * (1 + 0j)
     A = A - A.T
 
     pfa1 = pf.pfaffian(A)
@@ -55,7 +55,7 @@ def test_decompositions():
     # Test the LTL^T and Householder decompositions
 
     # first real matrices
-    A = numpy.matlib.rand(100, 100)
+    A = numpy.matlib.rand(100, 100) * (1.0 + 0j)
     A = A - A.T
 
     T, L, P = pf.skew_LTL(A)

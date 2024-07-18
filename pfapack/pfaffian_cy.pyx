@@ -8,8 +8,40 @@ import numpy as np
 import scipy.linalg as la
 import scipy.sparse as sp
 
+from libc.math cimport sqrt, atan2, exp, fabs
+from libc.complex cimport csqrt, cexp, conj
+cimport numpy as cnp
+cimport cython
+
+
+def get_column_slice_as_1d_real(cnp.ndarray[cnp.float64_t, ndim=2] A, int start_row, int col):
+    """
+    Extract a column slice as a 1D array from the given real matrix.
+    """
+    cdef:
+        int n = A.shape[0] - start_row
+        cnp.ndarray[cnp.float64_t, ndim=1] slice_1d = np.empty(n, dtype=A.dtype)
+        int i
+    for i in range(n):
+        slice_1d[i] = A[start_row + i, col]
+    return slice_1d
+
+def get_column_slice_as_1d_complex(cnp.ndarray[cnp.complex128_t, ndim=2] A, int start_row, int col):
+    """
+    Extract a column slice as a 1D array from the given complex matrix.
+    """
+    cdef:
+        int n = A.shape[0] - start_row
+        cnp.ndarray[cnp.complex128_t, ndim=1] slice_1d = np.empty(n, dtype=A.dtype)
+        int i
+
+    for i in range(n):
+        slice_1d[i] = A[start_row + i, col]
+    return slice_1d
+
 @cython.boundscheck(False)
-def householder_real(x):
+@cython.wraparound(False)
+def householder_real(cnp.ndarray[cnp.float64_t, ndim=1] x):
     """(v, tau, alpha) = householder_real(x)
 
     Compute a Householder transformation such that
@@ -18,121 +50,182 @@ def householder_real(x):
     alpha a real number (e_1 is the first unit vector)
     """
 
-    assert x.shape[0] > 0
+    cdef:
+        cnp.float64_t sigma = 0
+        cnp.float64_t norm_x = 0
+        cnp.float64_t alpha = 0
+        int i
+        cnp.ndarray[cnp.float64_t, ndim=1] v
 
-    sigma = np.dot(x[1:], x[1:])
+    # Compute sigma, the sum of squares of x[1:]
+    for i in range(1, x.shape[0]):
+        sigma += x[i] * x[i]
 
     if sigma == 0:
-        return (np.zeros(x.shape[0]), 0, x[0])
+        v = np.zeros(x.shape[0], dtype=np.float64)
+        return (v, 0, x[0])
     else:
-        norm_x = math.sqrt(x[0] ** 2 + sigma)
-
+        norm_x = sqrt(x[0] ** 2 + sigma)
         v = x.copy()
 
-        # depending on whether x[0] is positive or negatvie
-        # choose the sign
+        # Adjust the sign of the first element and compute alpha
         if x[0] <= 0:
             v[0] -= norm_x
-            alpha = +norm_x
+            alpha = norm_x
         else:
             v[0] += norm_x
             alpha = -norm_x
 
-        v = v / np.linalg.norm(v)
+        # Normalize v
+        norm_v = sqrt(np.dot(v, v))
+        for i in range(v.shape[0]):
+            v[i] /= norm_v
 
         return (v, 2, alpha)
 
-
-def householder_complex(x):
-    """(v, tau, alpha) = householder_real(x)
+@cython.boundscheck(False)
+def householder_complex(cnp.ndarray[cnp.complex128_t, ndim=1] x):
+    """(v, tau, alpha) = householder_complex(x)
 
     Compute a Householder transformation such that
     (1-tau v v^T) x = alpha e_1
-    where x and v a complex vectors, tau is 0 or 2, and
-    alpha a complex number (e_1 is the first unit vector)
+    where x and v are complex vectors, tau is 0 or 2, and
+    alpha is a complex number (e_1 is the first unit vector)
     """
     assert x.shape[0] > 0
 
-    sigma = np.dot(np.conj(x[1:]), x[1:])
+    cdef cnp.complex128_t sigma = 0 + 0j
+    cdef cnp.complex128_t norm_x = 0 + 0j
+    cdef cnp.complex128_t phase = 0 + 0j
+    cdef int i
+    cdef cnp.ndarray[cnp.complex128_t, ndim=1] v
+
+    # Compute sigma as the dot product of x[1:] with its conjugate
+    for i in range(1, len(x)):
+        sigma += x[i].conjugate() * x[i]
 
     if sigma == 0:
-        return (np.zeros(x.shape[0]), 0, x[0])
+        return (np.zeros(x.shape[0], dtype=np.complex128), 0, x[0])
     else:
-        norm_x = cmath.sqrt(x[0].conjugate() * x[0] + sigma)
+        norm_x = csqrt(x[0].conjugate() * x[0] + sigma)
 
         v = x.copy()
 
-        phase = cmath.exp(1j * math.atan2(x[0].imag, x[0].real))
+        phase = cexp(1j * atan2(x[0].imag, x[0].real))
 
         v[0] += phase * norm_x
 
+        # Normalize v
         v /= np.linalg.norm(v)
 
     return (v, 2, -phase * norm_x)
 
-
-def skew_tridiagonalize(A, overwrite_a=False, calc_q=True):
-    """T, Q = skew_tridiagonalize(A, overwrite_a, calc_q=True)
-
-    or
-
-    T = skew_tridiagonalize(A, overwrite_a, calc_q=False)
-
-    Bring a real or complex skew-symmetric matrix (A=-A^T) into
-    tridiagonal form T (with zero diagonal) with a orthogonal
-    (real case) or unitary (complex case) matrix U such that
-    A = Q T Q^T
-    (Note that Q^T and *not* Q^dagger also in the complex case)
-
-    A is overwritten if overwrite_a=True (default: False), and
-    Q only calculated if calc_q=True (default: True)
+@cython.boundscheck(False)
+def skew_tridiagonalize_real(cnp.ndarray[cnp.float64_t, ndim=2] A, bint overwrite_a=False, bint calc_q=True):
+    """
+    Transform a skew-symmetric real matrix into tridiagonal form with orthogonal transformation.
     """
 
-    # Check if matrix is square
-    assert A.shape[0] == A.shape[1] > 0
-    # Check if it's skew-symmetric
-    assert abs((A + A.T).max()) < 1e-14
+    cdef:
+        int i, n = A.shape[0]
+        cnp.ndarray[cnp.float64_t, ndim=1] v
+        cnp.float64_t tau, alpha, w_elem
+        cnp.ndarray[cnp.float64_t, ndim=1] w, y
+        cnp.ndarray[cnp.float64_t, ndim=2] Q
 
-    A = np.asarray(A)  # the slice views work only properly for arrays
-
-    # Check if we have a complex data type
-    if np.issubdtype(A.dtype, np.complexfloating):
-        householder = householder_complex
-    elif not np.issubdtype(A.dtype, np.number):
-        raise TypeError("pfaffian() can only work on numeric input")
-    else:
-        householder = householder_real
+    # Basic checks
+    assert n == A.shape[1] and n > 0, "Matrix must be square and non-empty"
+    assert abs((A + A.T).max()) < 1e-14, "Matrix must be skew-symmetric"
 
     if not overwrite_a:
         A = A.copy()
 
     if calc_q:
-        Q = np.eye(A.shape[0], dtype=A.dtype)
+        Q = np.eye(n, dtype=A.dtype)
 
-    for i in range(A.shape[0] - 2):
-        # Find a Householder vector to eliminate the i-th column
-        v, tau, alpha = householder(A[i + 1 :, i])
+    for i in range(n - 2):
+        v = get_column_slice_as_1d_real(A, i + 1, i)
+        v, tau, alpha = householder_real(v)
         A[i + 1, i] = alpha
         A[i, i + 1] = -alpha
         A[i + 2 :, i] = 0
         A[i, i + 2 :] = 0
 
-        # Update the matrix block A(i+1:N,i+1:N)
-        w = tau * np.dot(A[i + 1 :, i + 1 :], v.conj())
+        w = tau * np.dot(A[i + 1 :, i + 1 :], v)
         A[i + 1 :, i + 1 :] += np.outer(v, w) - np.outer(w, v)
 
         if calc_q:
-            # Accumulate the individual Householder reflections
-            # Accumulate them in the form P_1*P_2*..., which is
-            # (..*P_2*P_1)^dagger
             y = tau * np.dot(Q[:, i + 1 :], v)
-            Q[:, i + 1 :] -= np.outer(y, v.conj())
+            Q[:, i + 1 :] -= np.outer(y, v)
 
     if calc_q:
         return (np.asmatrix(A), np.asmatrix(Q))
     else:
         return np.asmatrix(A)
 
+
+@cython.boundscheck(False)
+def skew_tridiagonalize_complex(cnp.ndarray[cnp.complex128_t, ndim=2] A, bint overwrite_a=False, bint calc_q=True):
+    """
+    Transform a skew-symmetric complex matrix into tridiagonal form with unitary transformation.
+    """
+
+    cdef:
+        int i, n = A.shape[0]
+        cnp.ndarray[cnp.complex128_t, ndim=1] v
+        cnp.complex128_t tau, alpha, w_elem
+        cnp.ndarray[cnp.complex128_t, ndim=1] w, y
+        cnp.ndarray[cnp.complex128_t, ndim=2] Q
+
+    # Basic checks
+    assert n == A.shape[1] and n > 0, "Matrix must be square and non-empty"
+    assert abs((A + A.T).max()) < 1e-14, "Matrix must be skew-symmetric"
+
+    if not overwrite_a:
+        A = A.copy()
+
+    if calc_q:
+        Q = np.eye(n, dtype=A.dtype)
+
+    for i in range(n - 2):
+        v = get_column_slice_as_1d_complex(A, i + 1, i)
+        v, tau, alpha = householder_complex(v)
+        A[i + 1, i] = alpha
+        A[i, i + 1] = -alpha
+        A[i + 2 :, i] = 0
+        A[i, i + 2 :] = 0
+
+        # Ensure v is contiguous
+        v_conj = np.ascontiguousarray(v.conj())
+        A_sub = np.ascontiguousarray(A[i+1:, i+1:])
+
+        # Update the matrix block A(i+1:N, i+1:N)
+        w = tau * np.dot(A_sub, v_conj)
+        A[i+1:, i+1:] += np.outer(v, w) - np.outer(w, v)
+
+        if calc_q:
+            y = tau * np.dot(Q[:, i + 1 :], v)
+            Q[:, i + 1 :] -= np.outer(y, np.conj(v))
+
+    if calc_q:
+        return (np.asmatrix(A), np.asmatrix(Q))
+    else:
+        return np.asmatrix(A)
+
+
+@cython.boundscheck(False)
+def skew_tridiagonalize(cnp.ndarray A, bint overwrite_a=False, bint calc_q=True):
+    """
+    Driver function to transform a skew-symmetric matrix into tridiagonal form.
+    Selects the appropriate function based on the dtype of the matrix.
+    """
+
+    if np.issubdtype(A.dtype, np.complexfloating):
+        return skew_tridiagonalize_complex(A, overwrite_a, calc_q)
+    elif np.issubdtype(A.dtype, np.floating):
+        return skew_tridiagonalize_real(A, overwrite_a, calc_q)
+    else:
+        raise TypeError("skew_tridiagonalize() can only work on numeric input")
 
 def skew_LTL(A, overwrite_a=False, calc_L=True, calc_P=True):
     """T, L, P = skew_LTL(A, overwrite_a, calc_q=True)
@@ -224,28 +317,17 @@ def skew_LTL(A, overwrite_a=False, calc_L=True, calc_P=True):
         else:
             return np.asmatrix(A)
 
+@cython.boundscheck(False)
+@cython.wraparound(False)
+def pfaffian(cnp.ndarray A, bint overwrite_a=False, str method='P'):
+    assert A.shape[0] == A.shape[1] > 0, "Matrix must be square and non-empty"
+    assert fabs((A + A.T).max()) < 1e-14, "Matrix must be skew-symmetric"
+    assert method == 'P' or method == 'H', "Method must be 'P' or 'H'"
 
-def pfaffian(A, overwrite_a=False, method="P"):
-    """pfaffian(A, overwrite_a=False, method='P')
-
-    Compute the Pfaffian of a real or complex skew-symmetric
-    matrix A (A=-A^T). If overwrite_a=True, the matrix A
-    is overwritten in the process. This function uses
-    either the Parlett-Reid algorithm (method='P', default),
-    or the Householder tridiagonalization (method='H')
-    """
-    # Check if matrix is square
-    assert A.shape[0] == A.shape[1] > 0
-    # Check if it's skew-symmetric
-    assert abs((A + A.T).max()) < 1e-14
-    # Check that the method variable is appropriately set
-    assert method == "P" or method == "H"
-
-    if method == "P":
+    if method == 'P':
         return pfaffian_LTL(A, overwrite_a)
     else:
         return pfaffian_householder(A, overwrite_a)
-
 
 def pfaffian_LTL(A, overwrite_a=False):
     """pfaffian_LTL(A, overwrite_a=False)
@@ -318,63 +400,34 @@ def pfaffian_LTL(A, overwrite_a=False):
 
     return pfaffian_val
 
+@cython.boundscheck(False)
+@cython.wraparound(False)
+def pfaffian_householder_real(cnp.ndarray[cnp.float64_t, ndim=2] A, bint overwrite_a=False):
+    assert A.shape[0] == A.shape[1] and A.shape[0] > 0, "Matrix must be square and non-empty"
+    assert fabs((A + A.T).max()) < 1e-14, "Matrix must be skew-symmetric"
 
-def pfaffian_householder(A, overwrite_a=False):
-    """pfaffian(A, overwrite_a=False)
+    cdef:
+        int n = A.shape[0], i
+        cnp.float64_t pfaffian_val = 1.0
+        cnp.float64_t alpha, tau
+        cnp.ndarray[cnp.float64_t, ndim=1] v, w
 
-    Compute the Pfaffian of a real or complex skew-symmetric
-    matrix A (A=-A^T). If overwrite_a=True, the matrix A
-    is overwritten in the process. This function uses the
-    Householder tridiagonalization.
-
-    Note that the function pfaffian_schur() can also be used in the
-    real case. That function does not make use of the skew-symmetry
-    and is only slightly slower than pfaffian_householder().
-    """
-
-    # Check if matrix is square
-    assert A.shape[0] == A.shape[1] > 0
-    # Check if it's skew-symmetric
-    assert abs((A + A.T).max()) < 1e-14
-
-    n = A.shape[0]
-
-    # type check to fix problems with integer numbers
-    dtype = type(A[0, 0])
-    if dtype != np.complex128:
-        # the slice views work only properly for arrays
-        A = np.asarray(A, dtype=float)
-
-    # Quick return if possible
     if n % 2 == 1:
-        return 0
-
-    # Check if we have a complex data type
-    if np.issubdtype(A.dtype, np.complexfloating):
-        householder = householder_complex
-    elif not np.issubdtype(A.dtype, np.number):
-        raise TypeError("pfaffian() can only work on numeric input")
-    else:
-        householder = householder_real
-
-    A = np.asarray(A)  # the slice views work only properly for arrays
+        return 0.0
 
     if not overwrite_a:
-        A = A.copy()
+        A = np.asarray(A.copy(), dtype=np.double)
 
-    pfaffian_val = 1.0
-
-    for i in range(A.shape[0] - 2):
-        # Find a Householder vector to eliminate the i-th column
-        v, tau, alpha = householder(A[i + 1 :, i])
+    for i in range(n - 2):
+        v = get_column_slice_as_1d_real(A, i + 1, i)
+        v, tau, alpha = householder_real(v)
         A[i + 1, i] = alpha
         A[i, i + 1] = -alpha
-        A[i + 2 :, i] = 0
-        A[i, i + 2 :] = 0
+        A[i + 2:, i] = 0
+        A[i, i + 2:] = 0
 
-        # Update the matrix block A(i+1:N,i+1:N)
-        w = tau * np.dot(A[i + 1 :, i + 1 :], v.conj())
-        A[i + 1 :, i + 1 :] = A[i + 1 :, i + 1 :] + np.outer(v, w) - np.outer(w, v)
+        w = tau * np.dot(A[i + 1:, i + 1:], v)
+        A[i + 1:, i + 1:] += np.outer(v, w) - np.outer(w, v)
 
         if tau != 0:
             pfaffian_val *= 1 - tau
@@ -385,6 +438,59 @@ def pfaffian_householder(A, overwrite_a=False):
 
     return pfaffian_val
 
+@cython.boundscheck(False)
+@cython.wraparound(False)
+def pfaffian_householder_complex(cnp.ndarray[cnp.complex128_t, ndim=2] A, bint overwrite_a=False):
+    assert A.shape[0] == A.shape[1] and A.shape[0] > 0, "Matrix must be square and non-empty"
+    assert fabs((A + A.T).max()) < 1e-14, "Matrix must be skew-symmetric"
+
+    cdef:
+        int n = A.shape[0], i
+        double complex pfaffian_val = 1.0 + 0j
+        double complex alpha, tau
+        cnp.ndarray[cnp.complex128_t, ndim=1] v, w
+
+    if n % 2 == 1:
+        return 0.0
+
+    if not overwrite_a:
+        A = np.asarray(A.copy(), dtype=np.complex128)
+
+    for i in range(n - 2):
+        v = get_column_slice_as_1d_complex(A, i + 1, i)
+        v, tau, alpha = householder_complex(v)
+        A[i + 1, i] = alpha
+        A[i, i + 1] = -alpha
+        A[i + 2:, i] = 0
+        A[i, i + 2:] = 0
+
+        w = tau * np.dot(A[i+1:, i+1:], v.conj())
+        A[i + 1:, i + 1:] += np.outer(v, w) - np.outer(w, v)
+
+        if tau != 0:
+            pfaffian_val *= 1 - tau
+        if i % 2 == 0:
+            pfaffian_val *= -alpha
+
+    pfaffian_val *= A[n - 2, n - 1]
+
+    return pfaffian_val
+
+
+@cython.boundscheck(False)
+@cython.wraparound(False)
+def pfaffian_householder(cnp.ndarray A, bint overwrite_a=False):
+    # Type checks and setup
+    assert A.shape[0] == A.shape[1] and A.shape[0] > 0, "Matrix must be square and non-empty"
+    assert fabs((A + A.T).max()) < 1e-14, "Matrix must be skew-symmetric"
+
+    # Dispatch to the appropriate function based on datatype
+    if np.issubdtype(A.dtype, cnp.complexfloating):
+        return pfaffian_householder_complex(A, overwrite_a=overwrite_a)
+    elif np.issubdtype(A.dtype, np.number):
+        return pfaffian_householder_real(A, overwrite_a=overwrite_a)
+    else:
+        raise TypeError("pfaffian_householder can only work on numeric input")
 
 def pfaffian_schur(A, overwrite_a=False):
     """Calculate Pfaffian of a real antisymmetric matrix using
