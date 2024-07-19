@@ -1,5 +1,5 @@
 FORT = gfortran
-FFLAGS = -O3 -fimplicit-none -mmacosx-version-min=14.5
+FFLAGS = -O3 -fimplicit-none -mmacosx-version-min=14.0
 
 OBJECTS= slasktrd.o slasktrf.o sskbpf10.o sskbpfa.o sskbtrd.o \
     sskmv.o sskpf10.o sskpfa.o sskr2.o sskr2k.o ssktd2.o \
