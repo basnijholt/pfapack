@@ -6,6 +6,8 @@ import subprocess
 import numpy
 from setuptools import find_packages, setup, Extension
 from setuptools.command.build_ext import build_ext
+from setuptools.command.install import install
+from Cython.Build import cythonize
 
 if sys.version_info < (3, 7):
     print("pfapack requires Python 3.7 or above.")
@@ -27,7 +29,6 @@ extras_require = dict(
 
 install_requires = ["scipy", "numpy"]
 
-
 def get_version_and_cmdclass(package_name):
     from importlib.util import module_from_spec, spec_from_file_location
 
@@ -35,7 +36,6 @@ def get_version_and_cmdclass(package_name):
     module = module_from_spec(spec)
     spec.loader.exec_module(module)
     return module.__version__, module.cmdclass
-
 
 version, cmdclass = get_version_and_cmdclass("pfapack")
 
@@ -47,16 +47,19 @@ class CustomBuildExtCommand(build_ext):
         subprocess.check_call(['make', '-C', 'external/fortran'])
         # Compile the C interface library
         subprocess.check_call(['make', '-C', 'external/c_interface'])
-        # Move the shared object file to the correct location
-        os.makedirs(os.path.join(self.build_lib, 'pfapack'), exist_ok=True)
-        subprocess.check_call(['cp', 'external/c_interface/libcpfapack.so', os.path.join(self.build_lib, 'pfapack')])
         super().run()
+
+class CustomInstallCommand(install):
+    """Custom install command to run build_ext before install."""
+    def run(self):
+        self.run_command('build_ext')
+        install.run(self)
 
 setup(
     name="pfapack",
     python_requires=">=3.7",
-    version=version,
-    cmdclass={'build_ext': CustomBuildExtCommand},
+    version="0.0.1",  # changed cause git tags were causing issues for me
+    cmdclass={'build_ext': CustomBuildExtCommand, 'install': CustomInstallCommand},
     classifiers=[
         "Intended Audience :: Science/Research",
         "Operating System :: OS Independent",
