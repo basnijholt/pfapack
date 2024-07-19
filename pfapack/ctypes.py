@@ -10,7 +10,7 @@ import ctypes
 import numpy as np
 from numpy.ctypeslib import ndpointer
 
-lib = ctypes.CDLL("libcpfapack.so")
+lib = ctypes.CDLL("./libcpfapack.so")
 
 
 def _init(which):

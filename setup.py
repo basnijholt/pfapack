@@ -1,10 +1,11 @@
 #!/usr/bin/env python
 
 import sys
-
+import os
+import subprocess
 import numpy
 from setuptools import find_packages, setup, Extension
-from Cython.Build import cythonize
+from setuptools.command.build_ext import build_ext
 
 if sys.version_info < (3, 7):
     print("pfapack requires Python 3.7 or above.")
@@ -28,7 +29,6 @@ install_requires = ["scipy", "numpy"]
 
 
 def get_version_and_cmdclass(package_name):
-    import os
     from importlib.util import module_from_spec, spec_from_file_location
 
     spec = spec_from_file_location("version", os.path.join(package_name, "_version.py"))
@@ -39,15 +39,24 @@ def get_version_and_cmdclass(package_name):
 
 version, cmdclass = get_version_and_cmdclass("pfapack")
 
-# cython
-extensions = [
-    Extension("pfapack.pfaffian_cy", ["pfapack/pfaffian_cy.pyx"], include_dirs=[numpy.get_include()])]
+# Custom build command to compile the C and Fortran libraries
+class CustomBuildExtCommand(build_ext):
+    """Custom build command to compile the C library."""
+    def run(self):
+        # Compile the Fortran library
+        subprocess.check_call(['make', '-C', 'external/fortran'])
+        # Compile the C interface library
+        subprocess.check_call(['make', '-C', 'external/c_interface'])
+        # Move the shared object file to the correct location
+        os.makedirs(os.path.join(self.build_lib, 'pfapack'), exist_ok=True)
+        subprocess.check_call(['cp', 'external/c_interface/libcpfapack.so', os.path.join(self.build_lib, 'pfapack')])
+        super().run()
 
 setup(
     name="pfapack",
     python_requires=">=3.7",
     version=version,
-    cmdclass=cmdclass,
+    cmdclass={'build_ext': CustomBuildExtCommand},
     classifiers=[
         "Intended Audience :: Science/Research",
         "Operating System :: OS Independent",
@@ -67,9 +76,9 @@ setup(
     author="Bas Nijholt (package) and M. Wimmer (code)",
     author_email="basnijholt@gmail.com",
     license="MIT",
-    packages=find_packages("."),
+    packages=find_packages(),
     install_requires=install_requires,
     extras_require=extras_require,
     zip_safe=False,
-    ext_modules=cythonize(extensions, compiler_directives={'language_level': "3"}),
+    include_dirs=[numpy.get_include()],
 )

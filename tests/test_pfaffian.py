@@ -9,12 +9,7 @@ sys.path.append("..")
 
 from pfapack import pfaffian as pf  # noqa isort:skip
 
-try:
-    from pfapack.ctypes import pfaffian as cpfaffian
-
-    with_ctypes = True
-except OSError:
-    with_ctypes = False
+from pfapack.ctypes import pfaffian as cpfaffian
 
 
 EPS = 1e-12
@@ -79,7 +74,6 @@ def test_decompositions():
     assert numpy.linalg.norm(A - Q * T * Q.T) / numpy.linalg.norm(A) < EPS
 
 
-@pytest.mark.skipif(not with_ctypes, reason="the libs might not be installed")
 def test_ctypes():
     for method in ("P", "H"):
         # first real matrices
