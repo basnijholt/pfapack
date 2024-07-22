@@ -27,7 +27,7 @@ extras_require = dict(
     testing=["pytest", "pytest-cov", "pytest-mypy", "tox"],
 )
 
-install_requires = ["scipy", "numpy", "Cython"]
+install_requires = ["scipy", "numpy", "Cython", "setuptools"]
 
 def get_version_and_cmdclass(package_name):
     from importlib.util import module_from_spec, spec_from_file_location
