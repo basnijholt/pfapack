@@ -9,9 +9,17 @@ import ctypes
 
 import numpy as np
 from numpy.ctypeslib import ndpointer
+import pkg_resources
 
-lib = ctypes.CDLL("./libcpfapack.so")
+# Try to find the library path using pkg_resources
+try:
+    lib_path = pkg_resources.resource_filename('pfapack', 'libcpfapack.so')
+except Exception as e:
+    print(f"Error locating libcpfapack.so: {e}")
+    raise
 
+# Load the library
+lib = ctypes.CDLL(lib_path)
 
 def _init(which):
     func = getattr(lib, which)
