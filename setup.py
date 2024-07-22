@@ -80,6 +80,10 @@ setup(
     author_email="basnijholt@gmail.com",
     license="MIT",
     packages=find_packages(),
+    package_data={
+        'pfapack': ['libcpfapack.so'],  # Ensure this path is correct
+    },
+    include_package_data=True,
     install_requires=install_requires,
     extras_require=extras_require,
     zip_safe=False,
