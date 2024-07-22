@@ -9,8 +9,8 @@ from setuptools.command.build_ext import build_ext
 from setuptools.command.install import install
 from Cython.Build import cythonize
 
-if sys.version_info < (3, 7):
-    print("pfapack requires Python 3.7 or above.")
+if sys.version_info < (3, 9):
+    print("pfapack requires Python 3.9 or above.")
     sys.exit(1)
 
 with open("README.md") as f:
@@ -57,7 +57,7 @@ class CustomInstallCommand(install):
 
 setup(
     name="pfapack",
-    python_requires=">=3.7",
+    python_requires=">=3.9",
     version="0.0.1",  # changed cause git tags were causing issues for me
     cmdclass={'build_ext': CustomBuildExtCommand, 'install': CustomInstallCommand},
     classifiers=[
@@ -68,8 +68,6 @@ setup(
         "Topic :: Scientific/Engineering",
         "Topic :: Utilities",
         "License :: OSI Approved :: MIT License",
-        "Programming Language :: Python :: 3.7",
-        "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
     ],
     description="Efficient numerical computation of the Pfaffian for dense and banded skew-symmetric matrices.",
