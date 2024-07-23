@@ -75,7 +75,7 @@ def pfaffian(
     uplo: bytes = uplo.encode()
     method: bytes = method.encode()
     assert np.ndim(matrix) == 2 and np.shape(matrix)[0] == np.shape(matrix)[1]
-    if np.iscomplex(matrix).any():
+    if np.iscomplexobj(matrix): 
         a = np.zeros((2,) + np.shape(matrix), dtype=np.float64, order="F")
         a[0] = np.real(matrix)
         a[1] = np.imag(matrix)
