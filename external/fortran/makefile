@@ -1,5 +1,6 @@
 FORT = gfortran
-FFLAGS = -O3 -fimplicit-none
+FFLAGS = -O3 -march=native -ffast-math -funroll-loops -fimplicit-none
+LDFLAGS = -flto
 
 OBJECTS= slasktrd.o slasktrf.o sskbpf10.o sskbpfa.o sskbtrd.o \
     sskmv.o sskpf10.o sskpfa.o sskr2.o sskr2k.o ssktd2.o \
