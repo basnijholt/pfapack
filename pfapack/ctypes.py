@@ -52,54 +52,66 @@ def from_exp(x, exp):
         return x * np.inf
 
 
-def pfaffian(
-    matrix: np.ndarray,
-    uplo: str = "U",
-    method: str = "P",
-    avoid_overflow: bool = False,
-):
-    """Compute Pfaffian.
+def pfaffian(matrices, uplo="U", method="P", avoid_overflow=False):
+    """
+    Compute Pfaffians for a batch of skew-symmetric matrices.
 
     Parameters
     ----------
-    matrix : numpy.ndarray
-        Square skew-symmetric matrix.
+    matrices : numpy.ndarray
+        Batch of square skew-symmetric matrices, where computation is
+        performed on the last two dimensions.
     uplo : str
-        If 'U' ('L'), the upper (lower) triangle of the matrix is used.
+        'U' for upper triangle, 'L' for lower triangle.
     method : str
-        If 'P' ('H'), the Parley-Reid (Householder) algorithm is used.
+        'P' for Parlett-Reid algorithm, 'H' for Householder.
     avoid_overflow : bool
-        If True, take special care to avoid numerical under- or
-        overflow (at the cost of possible additional round-off errors).
+        True to handle numerical under- or overflow.
     """
-    uplo: bytes = uplo.encode()
-    method: bytes = method.encode()
-    assert np.ndim(matrix) == 2 and np.shape(matrix)[0] == np.shape(matrix)[1]
-    if np.iscomplexobj(matrix): 
-        a = np.zeros((2,) + np.shape(matrix), dtype=np.float64, order="F")
-        a[0] = np.real(matrix)
-        a[1] = np.imag(matrix)
-        if avoid_overflow:
-            pfaffian = (ctypes.c_double * 4)(0.0, 0.0)
-            success = skpf10_z(matrix.shape[0], a, pfaffian, uplo, method)
-            x = pfaffian[0] + 1j * pfaffian[1]
-            exp = pfaffian[2] + 1j * pfaffian[3]
-            pfaffian = from_exp(x, exp)
+    uplo = uplo.encode()
+    method = method.encode()
+
+    if matrices.ndim < 2:
+        raise ValueError("Input must be at least 2D.")
+
+    N = matrices.shape[-1]
+    if matrices.shape[-2] != N:
+        raise ValueError("Last two dimensions must be square.")
+
+    dtype = np.float64 if not np.iscomplexobj(matrices) else np.complex128
+    result = np.empty(matrices.shape[:-2], dtype=dtype)
+
+    # Flatten the leading dimensions
+    matrices = matrices.reshape(-1, N, N)
+
+    for idx, matrix in enumerate(matrices):
+        if np.iscomplexobj(matrix):
+            matrix = np.asarray(matrix, dtype=np.complex128, order='F')
+            matrix_real_imag = np.stack([matrix.real, matrix.imag], axis=0)
+
+            if avoid_overflow:
+                pfaffian_values = (ctypes.c_double * 4)()
+                skpf10_z(N, matrix_real_imag, pfaffian_values, uplo, method)
+                result_flat = from_exp(pfaffian_values[0] + 1j * pfaffian_values[1],
+                                       pfaffian_values[2] + 1j * pfaffian_values[3])
+            else:
+                pfaffian_values = (ctypes.c_double * 2)()
+                skpfa_z(N, matrix_real_imag, pfaffian_values, uplo, method)
+                result_flat = pfaffian_values[0] + 1j * pfaffian_values[1]
+
         else:
-            pfaffian = (ctypes.c_double * 2)(0.0, 0.0)
-            success = skpfa_z(matrix.shape[0], a, pfaffian, uplo, method)
-            pfaffian = pfaffian[0] + 1j * pfaffian[1]
-    else:
-        matrix = np.asarray(matrix, dtype=np.float64, order="F")
-        if avoid_overflow:
-            pfaffian = (ctypes.c_double * 2)(0.0, 0.0)
-            success = skpf10_d(matrix.shape[0], matrix, pfaffian, uplo, method)
-            pfaffian = from_exp(pfaffian[0], pfaffian[1])
-        else:
-            pfaffian = ctypes.c_double(0.0)
-            success = skpfa_d(
-                matrix.shape[0], matrix, ctypes.byref(pfaffian), uplo, method
-            )
-            pfaffian = pfaffian.value
-    assert success == 0
-    return pfaffian
+            matrix = np.asarray(matrix, dtype=np.float64, order='F')
+
+            if avoid_overflow:
+                pfaffian_values = (ctypes.c_double * 2)()
+                skpf10_d(N, matrix, pfaffian_values, uplo, method)
+                result_flat = from_exp(pfaffian_values[0], pfaffian_values[1])
+            else:
+                pfaffian_value = ctypes.c_double()
+                skpfa_d(N, matrix, ctypes.byref(pfaffian_value), uplo, method)
+                result_flat = pfaffian_value.value
+
+        # Assign the result to the appropriate element in the result array
+        np.ravel(result)[idx] = result_flat
+
+    return result
