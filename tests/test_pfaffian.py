@@ -1,6 +1,5 @@
 import numpy as np
 import numpy.linalg
-import numpy.matlib
 import pytest
 
 import sys  # isort:skip
@@ -20,7 +19,7 @@ def test_pfaffian():
     # and compare to the determinant
 
     # first real matrices
-    A = numpy.matlib.rand(100, 100)
+    A = np.random.randn(100, 100)
     A = A - A.T
 
     pfa1 = pf.pfaffian(A)
@@ -34,7 +33,7 @@ def test_pfaffian():
     assert abs((pfa1 ** 2 - deta) / deta) < EPS
 
     # then complex matrices
-    A = numpy.matlib.rand(100, 100) + 1.0j * numpy.matlib.rand(100, 100)
+    A = np.random.randn(100, 100) + 1.0j * np.random.randn(100, 100)
     A = A - A.T
 
     pfa1 = pf.pfaffian(A)
@@ -50,7 +49,7 @@ def test_decompositions():
     # Test the LTL^T and Householder decompositions
 
     # first real matrices
-    A = numpy.matlib.rand(100, 100)
+    A = np.random.randn(100, 100)
     A = A - A.T
 
     T, L, P = pf.skew_LTL(A)
@@ -62,7 +61,7 @@ def test_decompositions():
     assert numpy.linalg.norm(A - Q * T * Q.T) / numpy.linalg.norm(A) < EPS
 
     # then complex matrices
-    A = numpy.matlib.rand(100, 100) + 1.0j * numpy.matlib.rand(100, 100)
+    A = np.random.randn(100, 100) + 1.0j * np.random.randn(100, 100)
     A = A - A.T
 
     T, L, P = pf.skew_LTL(A)
@@ -77,7 +76,7 @@ def test_decompositions():
 def test_ctypes():
     for method in ("P", "H"):
         # first real matrices
-        A = numpy.matlib.rand(100, 100)
+        A = np.random.randn(100, 100)
         A = A - A.T
         pf_a = cpfaffian(A, uplo="L", method=method)
         pf_a2 = cpfaffian(A, uplo="L", avoid_overflow=True, method=method)
@@ -86,7 +85,7 @@ def test_ctypes():
         np.testing.assert_almost_equal(pf_a / pf.pfaffian(A), 1)
 
         # then complex matrices
-        A = numpy.matlib.rand(100, 100) + 1.0j * numpy.matlib.rand(100, 100)
+        A = np.random.randn(100, 100) + 1.0j * np.random.randn(100, 100)
         A = A - A.T
         pf_a = cpfaffian(A, uplo="L", method=method)
         pf_a2 = cpfaffian(A, uplo="L", avoid_overflow=True, method=method)
