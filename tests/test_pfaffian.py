@@ -110,3 +110,55 @@ def test_batched_vs_individual_float64():
 
         # Compare results
         np.testing.assert_allclose(pfaffians_batched, pfaffians_individual, rtol=EPS, atol=EPS)
+
+def test_batched_vs_individual_complex128():
+    batch_size = 20
+    dtype = np.complex128
+    for matrix_size in [4, 6, 8, 10, 12, 14, 16]:
+        # Generate a batch of random skew-Hermitian matrices
+        real_part = np.random.randn(batch_size, matrix_size, matrix_size)
+        imag_part = np.random.randn(batch_size, matrix_size, matrix_size)
+        batch = (real_part + 1j * imag_part).astype(dtype)
+        # Make the matrices skew-Hermitian
+        batch = batch - np.conjugate(np.transpose(batch, (0, 2, 1)))
+        # Calculate Pfaffians using batched method
+        pfaffians_batched = cpfaffian_batched(batch)
+        # Calculate Pfaffians individually
+        pfaffians_individual = np.array([cpfaffian(matrix) for matrix in batch])
+        # Compare results
+        assert np.allclose(pfaffians_batched, pfaffians_individual, rtol=EPS, atol=EPS)
+
+def test_known_values():
+    # Test with known values for both real and complex matrices
+    # Real skew-symmetric matrix
+    real_matrix = np.array([
+        [ 0,  1, -2,  3],
+        [-1,  0,  4, -5],
+        [ 2, -4,  0,  6],
+        [-3,  5, -6,  0]
+    ], dtype=np.float64)
+    expected_real_pfaffian = pf.pfaffian(real_matrix) 
+
+    # Complex skew-Hermitian matrix
+    complex_matrix = np.array([
+        [ 0,    1-1j, -2+2j,  3-3j],
+        [-1+1j,  0,    4-4j, -5+5j],
+        [ 2-2j, -4+4j,  0,    6-6j],
+        [-3+3j,  5-5j, -6+6j,  0   ]
+    ], dtype=np.complex128)
+    expected_complex_pfaffian = pf.pfaffian(complex_matrix) 
+
+    assert np.allclose(cpfaffian(real_matrix), expected_real_pfaffian, rtol=EPS, atol=EPS)
+    assert np.allclose(cpfaffian(complex_matrix), expected_complex_pfaffian, rtol=EPS, atol=EPS)
+
+    # Test batched version with known values
+    batch_real = np.array([real_matrix, real_matrix])
+    batch_complex = np.array([complex_matrix, complex_matrix])
+
+    assert np.allclose(cpfaffian_batched(batch_real), 
+                    np.array([expected_real_pfaffian, expected_real_pfaffian]), 
+                    rtol=EPS, atol=EPS)
+    assert np.allclose(cpfaffian_batched(batch_complex), 
+                    np.array([expected_complex_pfaffian, expected_complex_pfaffian]), 
+                    rtol=EPS, atol=EPS)
+

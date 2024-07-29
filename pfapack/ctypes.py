@@ -38,12 +38,26 @@ def _init_batched(which):
     ]
     return func
 
+def _init_batched_z(which):
+    func = getattr(lib, which)
+    func.restype = ctypes.c_int
+    func.argtypes = [
+        ctypes.c_int,  # batch_size
+        ctypes.c_int,  # N
+        ndpointer(ctypes.c_double, flags="F_CONTIGUOUS"),  # A_batch_real_imag
+        ndpointer(ctypes.c_double, flags="C_CONTIGUOUS"),  # PFAFF_batch_real_imag
+        ctypes.c_char_p,
+        ctypes.c_char_p,
+    ]
+    return func
+
 functions = {
     "skpfa_d": _init("skpfa_d"),
     "skpf10_d": _init("skpf10_d"),
     "skpfa_z": _init("skpfa_z"),
     "skpf10_z": _init("skpf10_z"),
     "skpfa_batched_d": _init_batched("skpfa_batched_d"),
+    "skpfa_batched_z": _init_batched_z("skpfa_batched_z"),
 }
 
 def from_exp(x, exp):
@@ -107,20 +121,39 @@ def pfaffian_batched(matrices, uplo="U", method="P"):
     if matrices.shape[-1] != N:
         raise ValueError("Last two dimensions of each matrix must be square.")
 
-    dtype = np.float64
+    is_complex = np.iscomplexobj(matrices)
+    dtype = np.float64 if not is_complex else np.complex128
     result = np.empty(batch_size, dtype=dtype)
 
-    # Ensure Fortran contiguous memory layout
-    matrices = np.asfortranarray(matrices, dtype=dtype)
+    if is_complex:
+        # Ensure Fortran contiguous memory layout for complex data
+        matrices = np.asfortranarray(matrices, dtype=np.complex128)
+        matrices_c = np.empty((batch_size, 2, N, N), dtype=np.float64, order="F")
+        matrices_c[:, 0, :, :] = np.real(matrices)
+        matrices_c[:, 1, :, :] = np.imag(matrices)
+        result_c = np.empty((batch_size, 2), dtype=np.float64)
 
-    success = functions["skpfa_batched_d"](
-        batch_size,
-        N,
-        matrices.ravel(),  # Pass a flattened view of the array
-        result,
-        uplo,
-        method
-    )
+        success = functions["skpfa_batched_z"](
+            batch_size,
+            N,
+            matrices_c.ravel(),
+            result_c.ravel(),
+            uplo,
+            method
+        )
+        result = result_c[:, 0] + 1j * result_c[:, 1]
+    else:
+        # Ensure Fortran contiguous memory layout for real data
+        matrices = np.asfortranarray(matrices, dtype=np.float64)
+
+        success = functions["skpfa_batched_d"](
+            batch_size,
+            N,
+            matrices.ravel(),
+            result,
+            uplo,
+            method
+        )
 
     assert success == 0
     return result
