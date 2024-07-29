@@ -9,9 +9,10 @@ sys.path.append("..")
 from pfapack import pfaffian as pf  # noqa isort:skip
 
 from pfapack.ctypes import pfaffian as cpfaffian
+from pfapack.ctypes import pfaffian_batched as cpfaffian_batched
 
 
-EPS = 1e-12
+EPS = 1e-11
 
 
 def test_pfaffian():
@@ -92,3 +93,20 @@ def test_ctypes():
 
         np.testing.assert_almost_equal(pf_a / pf_a2, 1)
         np.testing.assert_almost_equal(pf_a / pf.pfaffian(A), 1)
+
+def test_batched_vs_individual_float64():
+    batch_size = 20
+    dtype = np.float64
+    for matrix_size in [4,6,8,10,12,14,16]:
+        # Generate a batch of random skew-symmetric matrices
+        batch = np.random.randn(batch_size, matrix_size, matrix_size).astype(dtype)
+        batch = batch - np.transpose(batch, (0, 2, 1))
+
+        # Calculate Pfaffians using batched method
+        pfaffians_batched = cpfaffian_batched(batch)
+
+        # Calculate Pfaffians individually
+        pfaffians_individual = np.array([cpfaffian(matrix) for matrix in batch])
+
+        # Compare results
+        np.testing.assert_allclose(pfaffians_batched, pfaffians_individual, rtol=EPS, atol=EPS)

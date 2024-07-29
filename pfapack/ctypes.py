@@ -1,9 +1,5 @@
 # PFAPACK wrapper of the C library.
 
-# This module wraps
-# skpfa.o skpf10.o
-# and not yet
-# skbpfa.o skbpf10.o sktrf.o sktrd.o skbtrd.o
 import ctypes
 import numpy as np
 from numpy.ctypeslib import ndpointer
@@ -15,6 +11,7 @@ try:
 except Exception as e:
     print(f"Error locating libcpfapack.so: {e}")
     raise
+
 
 def _init(which):
     func = getattr(lib, which)
@@ -28,11 +25,25 @@ def _init(which):
     ]
     return func
 
+def _init_batched(which):
+    func = getattr(lib, which)
+    func.restype = ctypes.c_int
+    func.argtypes = [
+        ctypes.c_int,  # batch_size
+        ctypes.c_int,  # N
+        ndpointer(ctypes.c_double, flags="F_CONTIGUOUS"),  # A_batch
+        ndpointer(ctypes.c_double, flags="C_CONTIGUOUS"),  # PFAFF_batch
+        ctypes.c_char_p,
+        ctypes.c_char_p,
+    ]
+    return func
+
 functions = {
     "skpfa_d": _init("skpfa_d"),
     "skpf10_d": _init("skpf10_d"),
     "skpfa_z": _init("skpfa_z"),
-    "skpf10_z": _init("skpf10_z")
+    "skpf10_z": _init("skpf10_z"),
+    "skpfa_batched_d": _init_batched("skpfa_batched_d"),
 }
 
 def from_exp(x, exp):
@@ -84,4 +95,32 @@ def pfaffian(matrices, uplo="U", method="P", avoid_overflow=False):
         assert success == 0
         np.ravel(result)[idx] = pfaffian
 
+    return result
+
+def pfaffian_batched(matrices, uplo="U", method="P"):
+    uplo = uplo.encode()
+    method = method.encode()
+    if matrices.ndim != 3:
+        raise ValueError("Input must be 3D for batched operation.")
+
+    batch_size, N, _ = matrices.shape
+    if matrices.shape[-1] != N:
+        raise ValueError("Last two dimensions of each matrix must be square.")
+
+    dtype = np.float64
+    result = np.empty(batch_size, dtype=dtype)
+
+    # Ensure Fortran contiguous memory layout
+    matrices = np.asfortranarray(matrices, dtype=dtype)
+
+    success = functions["skpfa_batched_d"](
+        batch_size,
+        N,
+        matrices.ravel(),  # Pass a flattened view of the array
+        result,
+        uplo,
+        method
+    )
+
+    assert success == 0
     return result
