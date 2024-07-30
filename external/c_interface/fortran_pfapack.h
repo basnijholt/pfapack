@@ -32,6 +32,7 @@ inline int bandlower_fortran(int i, int j, int N, int KD)
 
 inline int bandupper_fortran(int i, int j, int N, int KD)
 {
+  (void)N;
   if(i<=j && i>=std::max(1,j-KD)) {
     return KD+i-j + (KD+1)*(j-1);
   }
@@ -66,6 +67,7 @@ inline int bandlower_fortran(int i, int j, int N, int KD)
 
 inline int bandupper_fortran(int i, int j, int N, int KD)
 {
+  (void)N;
   if(i<=j && i>=(1>j-KD ? 1 : j-KD)) {
     return KD+i-j + (KD+1)*(j-1);
   }

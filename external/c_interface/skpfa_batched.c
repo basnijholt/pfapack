@@ -180,23 +180,23 @@ int skpfa_batched_z(int batch_size, int N, double *A_batch_real_imag, double *PF
             double *current_pfaffian_real = PFAFF_batch_real_imag + i * 2;
             double *current_pfaffian_imag = current_pfaffian_real + 1;
 
-            // Create a copy of the current matrix with the correct sign convention
             double complex *matrix_copy = (double complex *)malloc(sizeof(double complex) * N * N);
-            if (!matrix_copy) {
-                free(work);
-                free(rwork);
-                free(iwork);
-                return -103;
-            }
-
-            // Copy the upper triangular part and negate it
-            for (int row = 0; row < N; row++) {
-                for (int col = row + 1; col < N; col++) {
-                    matrix_copy[row * N + col] = -((double complex){current_matrix_real[row * N + col], current_matrix_imag[row * N + col]});
-                    matrix_copy[col * N + row] = (double complex){current_matrix_real[row * N + col], current_matrix_imag[row * N + col]};
-                }
-                matrix_copy[row * N + row] = 0.0;  // Diagonal elements should be zero
-            }
+              if (!matrix_copy) {
+                  free(work);
+                  free(rwork);
+                  free(iwork);
+                  return -103;
+              }
+              
+              // Copy the upper triangular part and negate it
+              for (int row = 0; row < N; row++) {
+                  for (int col = row + 1; col < N; col++) {
+                      double complex value = current_matrix_real[row * N + col] + I * current_matrix_imag[row * N + col];
+                      matrix_copy[row * N + col] = -value;
+                      matrix_copy[col * N + row] = value;
+                  }
+                  matrix_copy[row * N + row] = 0.0;  // Diagonal elements should be zero
+              }
 
             double complex current_pfaffian;
             PFAPACK_zskpfa(&uplo, &mthd, &N, matrix_copy, &ldim, &current_pfaffian,
