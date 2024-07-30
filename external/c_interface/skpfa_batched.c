@@ -10,35 +10,24 @@ int skpfa_batched_d(int batch_size, int N, double *A_batch, double *PFAFF_batch,
                     const char *UPLO, const char *MTHD)
 {
     char uplo, mthd;
-
     uplo = toupper(UPLO[0]);
     mthd = toupper(MTHD[0]);
 
-    if (N < 0) {
-        return -1;
-    }
-    else if (A_batch == NULL) {
-        return -2;
-    }
-    else if (PFAFF_batch == NULL) {
-        return -3;
-    }
-    else if (uplo != 'U' && uplo != 'L') {
-        return -4;
-    }
-    else if (mthd != 'P' && mthd != 'H') {
-        return -5;
-    }
+    // Input validation
+    if (N < 0) return -1;
+    if (A_batch == NULL) return -2;
+    if (PFAFF_batch == NULL) return -3;
+    if (uplo != 'U' && uplo != 'L') return -4;
+    if (mthd != 'P' && mthd != 'H') return -5;
 
     if (N > 0) {
         int ldim = N;
         int info = 0;
-        int *iwork;
-        double *work;
         int lwork = -1;
         double qwork;
 
-        iwork = (int *)malloc(sizeof(int) * N);
+        // Allocate memory for the entire batch
+        int *iwork = (int *)malloc(sizeof(int) * N);
         if (!iwork) return -100;
 
         // Workspace query
@@ -51,24 +40,24 @@ int skpfa_batched_d(int batch_size, int N, double *A_batch, double *PFAFF_batch,
         }
 
         lwork = (int)qwork;
-        work = (double *)malloc(sizeof(double) * lwork);
+        double *work = (double *)malloc(sizeof(double) * lwork);
         if (!work) {
             free(iwork);
             return -102;
+        }
+
+        // Allocate memory for the matrix copy once
+        double *matrix_copy = (double *)malloc(sizeof(double) * N * N);
+        if (!matrix_copy) {
+            free(work);
+            free(iwork);
+            return -103;
         }
 
         // Process each matrix in the batch
         for (int i = 0; i < batch_size; i++) {
             double *current_matrix = A_batch + i * N * N;
             double *current_pfaffian = PFAFF_batch + i;
-
-            // Create a copy of the current matrix with the correct sign convention
-            double *matrix_copy = (double *)malloc(sizeof(double) * N * N);
-            if (!matrix_copy) {
-                free(work);
-                free(iwork);
-                return -103;
-            }
 
             // Copy the upper triangular part and negate it
             for (int row = 0; row < N; row++) {
@@ -82,15 +71,16 @@ int skpfa_batched_d(int batch_size, int N, double *A_batch, double *PFAFF_batch,
             PFAPACK_dskpfa(&uplo, &mthd, &N, matrix_copy, &ldim, current_pfaffian,
                            iwork, work, &lwork, &info);
 
-            free(matrix_copy);
-
             if (info) {
+                free(matrix_copy);
                 free(work);
                 free(iwork);
                 return -104 - i;
             }
         }
 
+        // Free allocated memory
+        free(matrix_copy);
         free(work);
         free(iwork);
     }
