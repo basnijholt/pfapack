@@ -90,7 +90,7 @@ def skew_tridiagonalize(A, overwrite_a=False, calc_q=True):
     # Check if matrix is square
     assert A.shape[0] == A.shape[1] > 0
     # Check if it's skew-symmetric
-    assert abs((A + A.T).max()) < 1e-14
+    assert np.allclose(A + A.T, 0, atol=1e-10)
 
     A = np.asarray(A)  # the slice views work only properly for arrays
 
@@ -149,7 +149,7 @@ def skew_LTL(A, overwrite_a=False, calc_L=True, calc_P=True):
     # Check if matrix is square
     assert A.shape[0] == A.shape[1] > 0
     # Check if it's skew-symmetric
-    assert abs((A + A.T).max()) < 1e-14
+    assert np.allclose(A + A.T, 0, atol=1e-10)
 
     n = A.shape[0]
     A = np.asarray(A)  # the slice views work only properly for arrays
@@ -236,7 +236,7 @@ def pfaffian(A, overwrite_a=False, method="P"):
     # Check if matrix is square
     assert A.shape[0] == A.shape[1] > 0
     # Check if it's skew-symmetric
-    assert abs((A + A.T).max()) < 1e-14
+    assert np.allclose(A + A.T, 0, atol=1e-10)
     # Check that the method variable is appropriately set
     assert method == "P" or method == "H"
 
@@ -257,7 +257,7 @@ def pfaffian_LTL(A, overwrite_a=False):
     # Check if matrix is square
     assert A.shape[0] == A.shape[1] > 0
     # Check if it's skew-symmetric
-    assert abs((A + A.T).max()) < 1e-14
+    assert np.allclose(A + A.T, 0, atol=1e-10)
 
     n, m = A.shape
     # type check to fix problems with integer numbers
@@ -334,7 +334,7 @@ def pfaffian_householder(A, overwrite_a=False):
     # Check if matrix is square
     assert A.shape[0] == A.shape[1] > 0
     # Check if it's skew-symmetric
-    assert abs((A + A.T).max()) < 1e-14
+    assert np.allclose(A + A.T, 0, atol=1e-10)
 
     n = A.shape[0]
 
@@ -402,7 +402,7 @@ def pfaffian_schur(A, overwrite_a=False):
 
     assert A.shape[0] == A.shape[1] > 0
 
-    assert abs(A + A.T).max() < 1e-14
+    assert np.allclose(A + A.T, 0, atol=1e-10)
 
     # Quick return if possible
     if A.shape[0] % 2 == 1:

@@ -119,8 +119,8 @@ def test_batched_vs_individual_complex128():
         real_part = np.random.randn(batch_size, matrix_size, matrix_size)
         imag_part = np.random.randn(batch_size, matrix_size, matrix_size)
         batch = (real_part + 1j * imag_part).astype(dtype)
-        # Make the matrices skew-Hermitian
-        batch = batch - np.conjugate(np.transpose(batch, (0, 2, 1)))
+        # Make the matrices skew-symmetric (not skew-Hermitian)
+        batch = batch - np.transpose(batch, (0, 2, 1))
         # Calculate Pfaffians using batched method
         pfaffians_batched = cpfaffian_batched(batch)
         # Calculate Pfaffians individually
