@@ -1,31 +1,53 @@
-name: tests
+name: Build and Test
 
-on: [push]
+on: [push, pull_request]
 
 jobs:
-  test:
+  build_and_test:
     runs-on: ${{ matrix.os }}
     strategy:
-      max-parallel: 4
+      fail-fast: false
       matrix:
         os: [ubuntu-latest]
         python-version: ['3.9', '3.10', '3.11', '3.12']
+
     steps:
-      - uses: actions/checkout@v1
-      - shell: bash
-        run: echo "##[set-output name=branch;]$(echo ${GITHUB_REF#refs/heads/})"
-        id: extract_branch
-      - shell: bash
-        run: echo "##[set-output name=py_version;]$(py_ver=${{ matrix.python-version }} && echo ${py_ver//./})"
-        id: extract_py_version
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v3
-        with:
-          python-version: ${{ matrix.python-version }}
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install .
-          pip install pytest 
-      - name: Test
-        run: pytest tests
+    - uses: actions/checkout@v3
+
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Install GCC-14
+      run: |
+        sudo add-apt-repository ppa:ubuntu-toolchain-r/test
+        sudo apt-get update
+        sudo apt-get install -y gcc-14 gfortran-14
+
+    - name: Set compiler environment variables
+      run: |
+        echo "CC=gcc-14" >> $GITHUB_ENV
+        echo "FC=gfortran-14" >> $GITHUB_ENV
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install pytest
+
+    - name: Install package
+      run: pip install .
+
+    - name: Build C/FORTRAN extensions
+      run: python setup.py build_ext --inplace
+
+    - name: Run tests
+      run: pytest -v tests
+
+    - name: Upload test results
+      uses: actions/upload-artifact@v3
+      with:
+        name: pytest-results-${{ matrix.os }}-${{ matrix.python-version }}
+        path: pytest-results.xml
+      if: ${{ always() }}
