@@ -19,16 +19,15 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
 
-    - name: Install GCC-14
+    - name: Install GCC and GFortran
       run: |
-        sudo add-apt-repository ppa:ubuntu-toolchain-r/test
         sudo apt-get update
-        sudo apt-get install -y gcc-14 gfortran-14
+        sudo apt-get install -y gcc gfortran
 
     - name: Set compiler environment variables
       run: |
-        echo "CC=gcc-14" >> $GITHUB_ENV
-        echo "FC=gfortran-14" >> $GITHUB_ENV
+        echo "CC=gcc" >> $GITHUB_ENV
+        echo "FC=gfortran" >> $GITHUB_ENV
 
     - name: Install dependencies
       run: |
@@ -50,4 +49,4 @@ jobs:
       with:
         name: pytest-results-${{ matrix.os }}-${{ matrix.python-version }}
         path: pytest-results.xml
-      if: ${{ always() }}
+      if: always()
