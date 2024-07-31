@@ -10,6 +10,7 @@ from pfapack import pfaffian as pf  # noqa isort:skip
 
 from pfapack.ctypes import pfaffian as cpfaffian
 from pfapack.ctypes import pfaffian_batched as cpfaffian_batched
+from pfapack.ctypes import pfaffian_batched_4d as cpfaffian_batched_4d
 
 
 EPS = 1e-11
@@ -115,7 +116,7 @@ def test_batched_vs_individual_complex128():
     batch_size = 20
     dtype = np.complex128
     for matrix_size in [4, 6, 8, 10, 12, 14, 16]:
-        # Generate a batch of random skew-Hermitian matrices
+        # Generate a batch of random skew-symm matrices
         real_part = np.random.randn(batch_size, matrix_size, matrix_size)
         imag_part = np.random.randn(batch_size, matrix_size, matrix_size)
         batch = (real_part + 1j * imag_part).astype(dtype)
@@ -162,3 +163,63 @@ def test_known_values():
                     np.array([expected_complex_pfaffian, expected_complex_pfaffian]), 
                     rtol=EPS, atol=EPS)
 
+def test_batched_4d_vs_individual():
+    outer_batch_size = 3
+    inner_batch_size = 4
+    matrix_sizes = [4, 6, 8]
+
+    for matrix_size in matrix_sizes:
+        # Test for real matrices
+        batch_real = np.random.randn(outer_batch_size, inner_batch_size, matrix_size, matrix_size)
+        batch_real = batch_real - np.transpose(batch_real, (0, 1, 3, 2))  # Make skew-symmetric
+
+        pfaffians_batched_real = cpfaffian_batched_4d(batch_real)
+        pfaffians_individual_real = np.array([[cpfaffian(matrix) for matrix in inner_batch]
+                                              for inner_batch in batch_real])
+
+        np.testing.assert_allclose(pfaffians_batched_real, pfaffians_individual_real, rtol=EPS, atol=EPS)
+
+        # Test for complex matrices
+        batch_complex = (np.random.randn(outer_batch_size, inner_batch_size, matrix_size, matrix_size) +
+                         1j * np.random.randn(outer_batch_size, inner_batch_size, matrix_size, matrix_size))
+        batch_complex = batch_complex - np.transpose(batch_complex, (0, 1, 3, 2))  # Make skew-symmetric
+
+        pfaffians_batched_complex = cpfaffian_batched_4d(batch_complex)
+        pfaffians_individual_complex = np.array([[cpfaffian(matrix) for matrix in inner_batch]
+                                                 for inner_batch in batch_complex])
+
+        np.testing.assert_allclose(pfaffians_batched_complex, pfaffians_individual_complex, rtol=EPS, atol=EPS)
+
+def test_known_values_4d():
+    # Define a small 4D array with known Pfaffians
+    real_matrix = np.array([
+        [ 0,  1, -2,  3],
+        [-1,  0,  4, -5],
+        [ 2, -4,  0,  6],
+        [-3,  5, -6,  0]
+    ], dtype=np.float64)
+
+    complex_matrix = np.array([
+        [ 0,    1-1j, -2+2j,  3-3j],
+        [-1+1j,  0,    4-4j, -5+5j],
+        [ 2-2j, -4+4j,  0,    6-6j],
+        [-3+3j,  5-5j, -6+6j,  0   ]
+    ], dtype=np.complex128)
+
+    # Create a 4D array with these known matrices
+    batch_real = np.array([[real_matrix, -real_matrix], [2*real_matrix, -2*real_matrix]])
+    batch_complex = np.array([[complex_matrix, -complex_matrix], [2*complex_matrix, -2*complex_matrix]])
+
+    # Calculate expected Pfaffians
+    expected_real = np.array([[pf.pfaffian(real_matrix), pf.pfaffian(-real_matrix)],
+                              [pf.pfaffian(2*real_matrix), pf.pfaffian(-2*real_matrix)]])
+    expected_complex = np.array([[pf.pfaffian(complex_matrix), pf.pfaffian(-complex_matrix)],
+                                 [pf.pfaffian(2*complex_matrix), pf.pfaffian(-2*complex_matrix)]])
+
+    # Calculate Pfaffians using the batched 4D function
+    pfaffians_batched_real = cpfaffian_batched_4d(batch_real)
+    pfaffians_batched_complex = cpfaffian_batched_4d(batch_complex)
+
+    # Compare results
+    np.testing.assert_allclose(pfaffians_batched_real, expected_real, rtol=EPS, atol=EPS)
+    np.testing.assert_allclose(pfaffians_batched_complex, expected_complex, rtol=EPS, atol=EPS)

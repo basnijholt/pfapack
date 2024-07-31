@@ -52,6 +52,34 @@ def _init_batched_z(which):
     ]
     return func
 
+def _init_batched_4d(which):
+    func = getattr(lib, which)
+    func.restype = ctypes.c_int
+    func.argtypes = [
+        ctypes.c_int,  # outer_batch_size
+        ctypes.c_int,  # inner_batch_size
+        ctypes.c_int,  # N
+        ndpointer(ctypes.c_double, flags="F_CONTIGUOUS"),  # A_batch
+        ndpointer(ctypes.c_double, flags="C_CONTIGUOUS"),  # PFAFF_batch
+        ctypes.c_char_p,
+        ctypes.c_char_p,
+    ]
+    return func
+
+def _init_batched_4d_z(which):
+    func = getattr(lib, which)
+    func.restype = ctypes.c_int
+    func.argtypes = [
+        ctypes.c_int,  # outer_batch_size
+        ctypes.c_int,  # inner_batch_size
+        ctypes.c_int,  # N
+        ndpointer(ctypes.c_double, flags="F_CONTIGUOUS"),  # A_batch_real_imag
+        ndpointer(ctypes.c_double, flags="C_CONTIGUOUS"),  # PFAFF_batch_real_imag
+        ctypes.c_char_p,
+        ctypes.c_char_p,
+    ]
+    return func
+
 functions = {
     "skpfa_d": _init("skpfa_d"),
     "skpf10_d": _init("skpf10_d"),
@@ -59,6 +87,8 @@ functions = {
     "skpf10_z": _init("skpf10_z"),
     "skpfa_batched_d": _init_batched("skpfa_batched_d"),
     "skpfa_batched_z": _init_batched_z("skpfa_batched_z"),
+    "skpfa_batched_4d_d": _init_batched_4d("skpfa_batched_4d_d"),
+    "skpfa_batched_4d_z": _init_batched_4d_z("skpfa_batched_4d_z"),
 }
 
 def from_exp(x, exp):
@@ -157,4 +187,55 @@ def pfaffian_batched(matrices, uplo="U", method="P"):
         )
 
     assert success == 0
+    return result
+
+def pfaffian_batched_4d(matrices, uplo="U", method="P"):
+    uplo = uplo.encode()
+    method = method.encode()
+    if matrices.ndim != 4:
+        raise ValueError("Input must be 4D for batched operation.")
+
+    outer_batch_size, inner_batch_size, N, _ = matrices.shape
+    if matrices.shape[-1] != N:
+        raise ValueError("Last two dimensions of each matrix must be square.")
+
+    is_complex = np.iscomplexobj(matrices)
+    dtype = np.float64 if not is_complex else np.complex128
+    result = np.empty((outer_batch_size, inner_batch_size), dtype=dtype)
+
+    if is_complex:
+        # Ensure Fortran contiguous memory layout for complex data
+        matrices = np.asfortranarray(matrices, dtype=np.complex128)
+        matrices_c = np.empty((outer_batch_size, inner_batch_size, 2, N, N), dtype=np.float64, order="F")
+        matrices_c[:, :, 0, :, :] = np.real(matrices)
+        matrices_c[:, :, 1, :, :] = np.imag(matrices)
+        result_c = np.empty((outer_batch_size, inner_batch_size, 2), dtype=np.float64)
+
+        success = functions["skpfa_batched_4d_z"](
+            outer_batch_size,
+            inner_batch_size,
+            N,
+            matrices_c.ravel(),
+            result_c.ravel(),
+            uplo,
+            method
+        )
+        result = result_c[:, :, 0] + 1j * result_c[:, :, 1]
+    else:
+        # Ensure Fortran contiguous memory layout for real data
+        matrices = np.asfortranarray(matrices, dtype=np.float64)
+
+        success = functions["skpfa_batched_4d_d"](
+            outer_batch_size,
+            inner_batch_size,
+            N,
+            matrices.ravel(),
+            result.ravel(),
+            uplo,
+            method
+        )
+
+    if success != 0:
+        raise RuntimeError(f"PFAPACK returned error code {success}")
+
     return result
