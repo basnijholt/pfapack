@@ -73,7 +73,7 @@ def _init_batched_4d_z(which):
         ctypes.c_int,  # outer_batch_size
         ctypes.c_int,  # inner_batch_size
         ctypes.c_int,  # N
-        ndpointer(ctypes.c_double, flags="F_CONTIGUOUS"),  # A_batch_real_imag
+        ndpointer(ctypes.c_double, flags="C_CONTIGUOUS"),  # A_batch_real_imag - CHANGED THIS
         ndpointer(ctypes.c_double, flags="C_CONTIGUOUS"),  # PFAFF_batch_real_imag
         ctypes.c_char_p,
         ctypes.c_char_p,
@@ -245,12 +245,14 @@ def pfaffian_batched_4d_cx(matrices, uplo="U", method="P"):
     method = method.encode()
     if matrices.ndim != 5:
         raise ValueError("Input must be 5D for batched operation.")
-
     outer_batch_size, inner_batch_size, ncx, N, _ = matrices.shape
     if ncx != 2:
         raise ValueError("Unexpected layout of the input matrix.")
     if matrices.shape[-1] != N:
         raise ValueError("Last two dimensions of each matrix must be square.")
+
+    # Explicitly use C-order ravel
+    matrices_c = matrices.ravel(order='C')
 
     result = np.empty((outer_batch_size, inner_batch_size), dtype=np.complex128)
     result_c = np.empty((outer_batch_size, inner_batch_size, 2), dtype=np.float64)
@@ -259,14 +261,12 @@ def pfaffian_batched_4d_cx(matrices, uplo="U", method="P"):
         outer_batch_size,
         inner_batch_size,
         N,
-        matrices.ravel(),
-        result_c.ravel(),
+        matrices_c,
+        result_c.ravel(order='C'),  # Also explicitly use C-order here
         uplo,
         method
     )
     result = result_c[:, :, 0] + 1j * result_c[:, :, 1]
-
     if success != 0:
         raise RuntimeError(f"PFAPACK returned error code {success}")
-
     return result
