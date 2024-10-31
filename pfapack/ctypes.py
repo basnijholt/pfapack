@@ -239,3 +239,34 @@ def pfaffian_batched_4d(matrices, uplo="U", method="P"):
         raise RuntimeError(f"PFAPACK returned error code {success}")
 
     return result
+
+def pfaffian_batched_4d_cx(matrices, uplo="U", method="P"):
+    uplo = uplo.encode()
+    method = method.encode()
+    if matrices.ndim != 5:
+        raise ValueError("Input must be 5D for batched operation.")
+
+    outer_batch_size, inner_batch_size, ncx, N, _ = matrices.shape
+    if ncx != 2:
+        raise ValueError("Unexpected layout of the input matrix.")
+    if matrices.shape[-1] != N:
+        raise ValueError("Last two dimensions of each matrix must be square.")
+
+    result = np.empty((outer_batch_size, inner_batch_size), dtype=np.complex128)
+    result_c = np.empty((outer_batch_size, inner_batch_size, 2), dtype=np.float64)
+
+    success = functions["skpfa_batched_4d_z"](
+        outer_batch_size,
+        inner_batch_size,
+        N,
+        matrices.ravel(),
+        result_c.ravel(),
+        uplo,
+        method
+    )
+    result = result_c[:, :, 0] + 1j * result_c[:, :, 1]
+
+    if success != 0:
+        raise RuntimeError(f"PFAPACK returned error code {success}")
+
+    return result
