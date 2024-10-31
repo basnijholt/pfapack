@@ -251,9 +251,6 @@ def pfaffian_batched_4d_cx(matrices, uplo="U", method="P"):
     if matrices.shape[-1] != N:
         raise ValueError("Last two dimensions of each matrix must be square.")
 
-    # Explicitly use C-order ravel
-    matrices_c = matrices.ravel(order='C')
-
     result = np.empty((outer_batch_size, inner_batch_size), dtype=np.complex128)
     result_c = np.empty((outer_batch_size, inner_batch_size, 2), dtype=np.float64)
 
@@ -261,8 +258,8 @@ def pfaffian_batched_4d_cx(matrices, uplo="U", method="P"):
         outer_batch_size,
         inner_batch_size,
         N,
-        matrices_c,
-        result_c.ravel(order='C'),  # Also explicitly use C-order here
+        matrices,
+        result_c,
         uplo,
         method
     )
