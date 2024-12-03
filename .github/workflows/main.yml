@@ -22,7 +22,7 @@ jobs:
         run: echo "##[set-output name=py_version;]$(py_ver=${{ matrix.python-version }} && echo ${py_ver//./})"
         id: extract_py_version
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
       - name: Install dependencies
