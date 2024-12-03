@@ -27,12 +27,12 @@ jobs:
       if: matrix.os == 'ubuntu-latest'
       run: |
         sudo apt-get update
-        sudo apt-get install -y gfortran libblas-dev liblapack-dev ninja-build meson
+        sudo apt-get install -y gfortran libblas-dev liblapack-dev ninja-build
 
     - name: Install system dependencies (macOS)
       if: matrix.os == 'macos-latest'
       run: |
-        brew install gcc openblas lapack ninja meson
+        brew install gcc openblas lapack ninja
 
     - name: Install system dependencies (Windows)
       if: matrix.os == 'windows-latest'
@@ -44,7 +44,6 @@ jobs:
           openblas
           lapack
           ninja
-          meson
         cache-downloads: true
         cache-environment: true
 
@@ -59,7 +58,7 @@ jobs:
         pip --version
 
         # Install and run tests
-        pip install -U pip
+        pip install meson
         pip install -e . --config-settings=setup-args="-Dbuild_tests=enabled"
         cd build/cp* && meson test --verbose
 
