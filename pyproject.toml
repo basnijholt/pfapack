@@ -1,7 +1,83 @@
 [build-system]
-requires = [
-    "setuptools >= 40.0.4",
-    "setuptools_scm >= 2.0.0, <4",
-    "wheel >= 0.29.0",
+build-backend = "hatchling.build"
+requires = ["hatchling", "versioningit"]
+
+[project]
+name = "pfapack"
+description = "Efficient numerical computation of the Pfaffian for dense and banded skew-symmetric matrices."
+requires-python = ">=3.10"
+dynamic = ["version"]
+authors = [
+    # Packing author
+    { name = "Bas Nijholt", email = "bas@nijho.lt" },
+    # Code author
+
+    {name = "Michael Wimmer", email = "m.t.wimmer@tudelft.nl" },
 ]
-build-backend = 'setuptools.build_meta'
+license = {text = "MIT"}
+classifiers = [
+    "Intended Audience :: Science/Research",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Scientific/Engineering",
+    "Topic :: Utilities",
+    "License :: OSI Approved :: MIT License",
+]
+dependencies = ["scipy", "numpy"]
+
+[project.optional-dependencies]
+docs = [
+    "sphinx",
+    "sphinx-rtd-theme",
+    "m2r",
+    "sphinxcontrib.apidoc",
+]
+dev = ["pre-commit"]
+test = ["pytest", "pytest-cov", "pytest-mypy", "tox"]
+
+[project.urls]
+homepage = "https://github.com/basnijholt/pfapack"
+repository = "https://github.com/basnijholt/pfapack"
+
+[project.readme]
+content-type = "text/markdown"
+file = "README.md"
+
+[tool.hatch.version]
+source = "versioningit"
+
+[tool.hatch.build.targets.wheel]
+packages = ["pfapack"]
+
+[tool.hatch.build.hooks.versioningit-onbuild]
+build-file = "pfapack/_version.py"
+source-file = "pfapack/_version.py"
+
+[tool.versioningit]
+default-version = "0.0.0"
+
+[tool.versioningit.vcs]
+method = "git"
+match = ["v*"]
+default-tag = "0.0.0"
+
+[tool.versioningit.format]
+dirty = "{version}.dev{distance}+{branch}.{vcs}{rev}.dirty"
+distance = "{version}.dev{distance}+{branch}.{vcs}{rev}"
+distance-dirty = "{version}.dev{distance}+{branch}.{vcs}{rev}.dirty"
+
+[tool.mypy]
+python_version = "3.10"
+follow_imports = "silent"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "tests.*"
+ignore_errors = true
