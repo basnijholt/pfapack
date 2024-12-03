@@ -43,6 +43,7 @@ jobs:
           mingw-w64-x86_64-gcc-fortran
           mingw-w64-x86_64-openblas
         path-type: minimal
+        release: false
 
     - run: echo '${{ steps.msys2.outputs.msys2-location }}'
 
