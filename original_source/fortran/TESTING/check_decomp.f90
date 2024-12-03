@@ -1,0 +1,301 @@
+MODULE check_decomp
+  INTERFACE check_LTL_F77
+     SUBROUTINE check_LTL_F77_s(UPLO, B, RESIDUAL, RELW)
+       IMPLICIT NONE
+       CHARACTER(LEN=1) :: UPLO 
+       REAL(KIND(1.0E0)) :: B(:,:)
+       REAL(KIND(1.0E0)) :: RESIDUAL, RELW
+     END SUBROUTINE check_LTL_F77_s
+
+     SUBROUTINE check_LTL_F77_d(UPLO, B, RESIDUAL, RELW)
+       IMPLICIT NONE
+       CHARACTER(LEN=1) :: UPLO 
+       REAL(KIND(1.0D0)) :: B(:,:)
+       REAL(KIND(1.0D0)) :: RESIDUAL, RELW
+     END SUBROUTINE check_LTL_F77_d
+
+     SUBROUTINE check_LTL_F77_c(UPLO, B, RESIDUAL, RELW)
+       IMPLICIT NONE
+       CHARACTER(LEN=1) :: UPLO 
+       COMPLEX(KIND(1.0E0)) :: B(:,:)
+       REAL(KIND(1.0E0)) :: RESIDUAL, RELW
+     END SUBROUTINE check_LTL_F77_c
+
+     SUBROUTINE check_LTL_F77_z(UPLO, B, RESIDUAL, RELW)
+       IMPLICIT NONE
+       CHARACTER(LEN=1) :: UPLO 
+       COMPLEX(KIND(1.0D0)) :: B(:,:)
+       REAL(KIND(1.0D0)) :: RESIDUAL, RELW
+     END SUBROUTINE check_LTL_F77_z
+  END INTERFACE
+
+  INTERFACE check_LTL_F95
+     SUBROUTINE check_LTL_F95_s(UPLO, B, RESIDUAL)
+       IMPLICIT NONE
+       CHARACTER(LEN=1) :: UPLO 
+       REAL(KIND(1.0E0)) :: B(:,:)
+       REAL(KIND(1.0E0)) :: RESIDUAL
+     END SUBROUTINE check_LTL_F95_s
+
+     SUBROUTINE check_LTL_F95_d(UPLO, B, RESIDUAL)
+       IMPLICIT NONE
+       CHARACTER(LEN=1) :: UPLO 
+       REAL(KIND(1.0D0)) :: B(:,:)
+       REAL(KIND(1.0D0)) :: RESIDUAL
+     END SUBROUTINE check_LTL_F95_d
+
+     SUBROUTINE check_LTL_F95_c(UPLO, B, RESIDUAL)
+       IMPLICIT NONE
+       CHARACTER(LEN=1) :: UPLO 
+       COMPLEX(KIND(1.0E0)) :: B(:,:)
+       REAL(KIND(1.0E0)) :: RESIDUAL
+     END SUBROUTINE check_LTL_F95_c
+
+     SUBROUTINE check_LTL_F95_z(UPLO, B, RESIDUAL)
+       IMPLICIT NONE
+       CHARACTER(LEN=1) :: UPLO 
+       COMPLEX(KIND(1.0D0)) :: B(:,:)
+       REAL(KIND(1.0D0)) :: RESIDUAL
+     END SUBROUTINE check_LTL_F95_z
+  END INTERFACE
+
+  INTERFACE check_LTL_noblock_F77
+     SUBROUTINE check_LTL_noblock_F77_s(UPLO, B, RESIDUAL)
+       IMPLICIT NONE
+       CHARACTER(LEN=1) :: UPLO 
+       REAL(KIND(1.0E0)) :: B(:,:)
+       REAL(KIND(1.0E0)) :: RESIDUAL
+     END SUBROUTINE check_LTL_noblock_F77_s
+
+     SUBROUTINE check_LTL_noblock_F77_d(UPLO, B, RESIDUAL)
+       IMPLICIT NONE
+       CHARACTER(LEN=1) :: UPLO 
+       REAL(KIND(1.0D0)) :: B(:,:)
+       REAL(KIND(1.0D0)) :: RESIDUAL
+     END SUBROUTINE check_LTL_noblock_F77_d
+
+     SUBROUTINE check_LTL_noblock_F77_c(UPLO, B, RESIDUAL)
+       IMPLICIT NONE
+       CHARACTER(LEN=1) :: UPLO 
+       COMPLEX(KIND(1.0E0)) :: B(:,:)
+       REAL(KIND(1.0E0)) :: RESIDUAL
+     END SUBROUTINE check_LTL_noblock_F77_c
+
+     SUBROUTINE check_LTL_noblock_F77_z(UPLO, B, RESIDUAL)
+       IMPLICIT NONE
+       CHARACTER(LEN=1) :: UPLO 
+       COMPLEX(KIND(1.0D0)) :: B(:,:)
+       REAL(KIND(1.0D0)) :: RESIDUAL
+     END SUBROUTINE check_LTL_noblock_F77_z
+  END INTERFACE
+
+  INTERFACE check_LTL_noblock_F95
+     SUBROUTINE check_LTL_noblock_F95_s(UPLO, B, RESIDUAL)
+       IMPLICIT NONE
+       CHARACTER(LEN=1) :: UPLO 
+       REAL(KIND(1.0E0)) :: B(:,:)
+       REAL(KIND(1.0E0)) :: RESIDUAL
+     END SUBROUTINE check_LTL_noblock_F95_s
+
+     SUBROUTINE check_LTL_noblock_F95_d(UPLO, B, RESIDUAL)
+       IMPLICIT NONE
+       CHARACTER(LEN=1) :: UPLO 
+       REAL(KIND(1.0D0)) :: B(:,:)
+       REAL(KIND(1.0D0)) :: RESIDUAL
+     END SUBROUTINE check_LTL_noblock_F95_d
+
+     SUBROUTINE check_LTL_noblock_F95_c(UPLO, B, RESIDUAL)
+       IMPLICIT NONE
+       CHARACTER(LEN=1) :: UPLO 
+       COMPLEX(KIND(1.0E0)) :: B(:,:)
+       REAL(KIND(1.0E0)) :: RESIDUAL
+     END SUBROUTINE check_LTL_noblock_F95_c
+
+     SUBROUTINE check_LTL_noblock_F95_z(UPLO, B, RESIDUAL)
+       IMPLICIT NONE
+       CHARACTER(LEN=1) :: UPLO 
+       COMPLEX(KIND(1.0D0)) :: B(:,:)
+       REAL(KIND(1.0D0)) :: RESIDUAL
+     END SUBROUTINE check_LTL_noblock_F95_z
+  END INTERFACE
+
+  INTERFACE check_QTQ_F77
+     SUBROUTINE check_QTQ_F77_s(UPLO, B, RESIDUAL, RELW)
+       IMPLICIT NONE
+       CHARACTER(LEN=1) :: UPLO 
+       REAL(KIND(1.0E0)) :: B(:,:)
+       REAL(KIND(1.0E0)) :: RESIDUAL, RELW
+     END SUBROUTINE check_QTQ_F77_s
+
+     SUBROUTINE check_QTQ_F77_d(UPLO, B, RESIDUAL, RELW)
+       IMPLICIT NONE
+       CHARACTER(LEN=1) :: UPLO 
+       REAL(KIND(1.0D0)) :: B(:,:)
+       REAL(KIND(1.0D0)) :: RESIDUAL, RELW
+     END SUBROUTINE check_QTQ_F77_d
+
+     SUBROUTINE check_QTQ_F77_c(UPLO, B, RESIDUAL, RELW)
+       IMPLICIT NONE
+       CHARACTER(LEN=1) :: UPLO 
+       COMPLEX(KIND(1.0E0)) :: B(:,:)
+       REAL(KIND(1.0E0)) :: RESIDUAL, RELW
+     END SUBROUTINE check_QTQ_F77_c
+
+     SUBROUTINE check_QTQ_F77_z(UPLO, B, RESIDUAL, RELW)
+       IMPLICIT NONE
+       CHARACTER(LEN=1) :: UPLO 
+       COMPLEX(KIND(1.0D0)) :: B(:,:)
+       REAL(KIND(1.0D0)) :: RESIDUAL, RELW
+     END SUBROUTINE check_QTQ_F77_z
+  END INTERFACE
+
+  INTERFACE check_QTQ_F95
+     SUBROUTINE check_QTQ_F95_s(UPLO, B, RESIDUAL)
+       IMPLICIT NONE
+       CHARACTER(LEN=1) :: UPLO 
+       REAL(KIND(1.0E0)) :: B(:,:)
+       REAL(KIND(1.0E0)) :: RESIDUAL
+     END SUBROUTINE check_QTQ_F95_s
+
+     SUBROUTINE check_QTQ_F95_d(UPLO, B, RESIDUAL)
+       IMPLICIT NONE
+       CHARACTER(LEN=1) :: UPLO 
+       REAL(KIND(1.0D0)) :: B(:,:)
+       REAL(KIND(1.0D0)) :: RESIDUAL
+     END SUBROUTINE check_QTQ_F95_d
+
+     SUBROUTINE check_QTQ_F95_c(UPLO, B, RESIDUAL)
+       IMPLICIT NONE
+       CHARACTER(LEN=1) :: UPLO 
+       COMPLEX(KIND(1.0E0)) :: B(:,:)
+       REAL(KIND(1.0E0)) :: RESIDUAL
+     END SUBROUTINE check_QTQ_F95_c
+
+     SUBROUTINE check_QTQ_F95_z(UPLO, B, RESIDUAL)
+       IMPLICIT NONE
+       CHARACTER(LEN=1) :: UPLO 
+       COMPLEX(KIND(1.0D0)) :: B(:,:)
+       REAL(KIND(1.0D0)) :: RESIDUAL
+     END SUBROUTINE check_QTQ_F95_z
+  END INTERFACE
+
+  INTERFACE check_QTQ_noblock_F77
+     SUBROUTINE check_QTQ_noblock_F77_s(UPLO, B, RESIDUAL)
+       IMPLICIT NONE
+       CHARACTER(LEN=1) :: UPLO 
+       REAL(KIND(1.0E0)) :: B(:,:)
+       REAL(KIND(1.0E0)) :: RESIDUAL
+     END SUBROUTINE check_QTQ_noblock_F77_s
+
+     SUBROUTINE check_QTQ_noblock_F77_d(UPLO, B, RESIDUAL)
+       IMPLICIT NONE
+       CHARACTER(LEN=1) :: UPLO 
+       REAL(KIND(1.0D0)) :: B(:,:)
+       REAL(KIND(1.0D0)) :: RESIDUAL
+     END SUBROUTINE check_QTQ_noblock_F77_d
+
+     SUBROUTINE check_QTQ_noblock_F77_c(UPLO, B, RESIDUAL)
+       IMPLICIT NONE
+       CHARACTER(LEN=1) :: UPLO 
+       COMPLEX(KIND(1.0E0)) :: B(:,:)
+       REAL(KIND(1.0E0)) :: RESIDUAL
+     END SUBROUTINE check_QTQ_noblock_F77_c
+
+     SUBROUTINE check_QTQ_noblock_F77_z(UPLO, B, RESIDUAL)
+       IMPLICIT NONE
+       CHARACTER(LEN=1) :: UPLO 
+       COMPLEX(KIND(1.0D0)) :: B(:,:)
+       REAL(KIND(1.0D0)) :: RESIDUAL
+     END SUBROUTINE check_QTQ_noblock_F77_z
+  END INTERFACE
+
+  INTERFACE check_QTQ_noblock_F95
+     SUBROUTINE check_QTQ_noblock_F95_s(UPLO, B, RESIDUAL)
+       IMPLICIT NONE
+       CHARACTER(LEN=1) :: UPLO 
+       REAL(KIND(1.0E0)) :: B(:,:)
+       REAL(KIND(1.0E0)) :: RESIDUAL
+     END SUBROUTINE check_QTQ_noblock_F95_s
+
+     SUBROUTINE check_QTQ_noblock_F95_d(UPLO, B, RESIDUAL)
+       IMPLICIT NONE
+       CHARACTER(LEN=1) :: UPLO 
+       REAL(KIND(1.0D0)) :: B(:,:)
+       REAL(KIND(1.0D0)) :: RESIDUAL
+     END SUBROUTINE check_QTQ_noblock_F95_d
+
+     SUBROUTINE check_QTQ_noblock_F95_c(UPLO, B, RESIDUAL)
+       IMPLICIT NONE
+       CHARACTER(LEN=1) :: UPLO 
+       COMPLEX(KIND(1.0E0)) :: B(:,:)
+       REAL(KIND(1.0E0)) :: RESIDUAL
+     END SUBROUTINE check_QTQ_noblock_F95_c
+
+     SUBROUTINE check_QTQ_noblock_F95_z(UPLO, B, RESIDUAL)
+       IMPLICIT NONE
+       CHARACTER(LEN=1) :: UPLO 
+       COMPLEX(KIND(1.0D0)) :: B(:,:)
+       REAL(KIND(1.0D0)) :: RESIDUAL
+     END SUBROUTINE check_QTQ_noblock_F95_z
+  END INTERFACE
+
+  INTERFACE check_QTQ_band_F77
+     SUBROUTINE check_QTQ_band_F77_s(UPLO, A, B, RESIDUAL)
+       IMPLICIT NONE
+       CHARACTER(LEN=1) :: UPLO 
+       REAL(KIND(1.0E0)) :: A(:,:), B(:,:)
+       REAL(KIND(1.0E0)) :: RESIDUAL
+     END SUBROUTINE check_QTQ_band_F77_s
+
+     SUBROUTINE check_QTQ_band_F77_d(UPLO, A, B, RESIDUAL)
+       IMPLICIT NONE
+       CHARACTER(LEN=1) :: UPLO 
+       REAL(KIND(1.0D0)) :: A(:,:), B(:,:)
+       REAL(KIND(1.0D0)) :: RESIDUAL
+     END SUBROUTINE check_QTQ_band_F77_d
+
+     SUBROUTINE check_QTQ_band_F77_c(UPLO, A, B, RESIDUAL)
+       IMPLICIT NONE
+       CHARACTER(LEN=1) :: UPLO 
+       COMPLEX(KIND(1.0E0)) :: A(:,:), B(:,:)
+       REAL(KIND(1.0E0)) :: RESIDUAL
+     END SUBROUTINE check_QTQ_band_F77_c
+
+     SUBROUTINE check_QTQ_band_F77_z(UPLO, A, B, RESIDUAL)
+       IMPLICIT NONE
+       CHARACTER(LEN=1) :: UPLO 
+       COMPLEX(KIND(1.0D0)) :: A(:,:), B(:,:)
+       REAL(KIND(1.0D0)) :: RESIDUAL
+     END SUBROUTINE check_QTQ_band_F77_z
+  END INTERFACE
+
+  INTERFACE check_QTQ_band_F95
+     SUBROUTINE check_QTQ_band_F95_s(UPLO, A, B, RESIDUAL)
+       IMPLICIT NONE
+       CHARACTER(LEN=1) :: UPLO 
+       REAL(KIND(1.0E0)) :: A(:,:), B(:,:)
+       REAL(KIND(1.0E0)) :: RESIDUAL
+     END SUBROUTINE check_QTQ_band_F95_s
+
+     SUBROUTINE check_QTQ_band_F95_d(UPLO, A, B, RESIDUAL)
+       IMPLICIT NONE
+       CHARACTER(LEN=1) :: UPLO 
+       REAL(KIND(1.0D0)) :: A(:,:), B(:,:)
+       REAL(KIND(1.0D0)) :: RESIDUAL
+     END SUBROUTINE check_QTQ_band_F95_d
+
+     SUBROUTINE check_QTQ_band_F95_c(UPLO, A, B, RESIDUAL)
+       IMPLICIT NONE
+       CHARACTER(LEN=1) :: UPLO 
+       COMPLEX(KIND(1.0E0)) :: A(:,:), B(:,:)
+       REAL(KIND(1.0E0)) :: RESIDUAL
+     END SUBROUTINE check_QTQ_band_F95_c
+
+     SUBROUTINE check_QTQ_band_F95_z(UPLO, A, B, RESIDUAL)
+       IMPLICIT NONE
+       CHARACTER(LEN=1) :: UPLO 
+       COMPLEX(KIND(1.0D0)) :: A(:,:), B(:,:)
+       REAL(KIND(1.0D0)) :: RESIDUAL
+     END SUBROUTINE check_QTQ_band_F95_z
+  END INTERFACE
+END MODULE check_decomp
