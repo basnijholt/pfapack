@@ -45,12 +45,13 @@ jobs:
       if: matrix.os == 'windows-latest'
       shell: bash
       run: |
-        # Install OpenBLAS using pip
-        pip install -U numpy  # numpy includes openblas
-        # Set environment variables for finding OpenBLAS
-        NUMPY_DIR=$(python -c "import numpy; print(numpy.__path__[0])")
-        echo "PKG_CONFIG_PATH=${NUMPY_DIR}/core/lib/pkgconfig" >> $GITHUB_ENV
-        echo "OPENBLAS_NUM_THREADS=1" >> $GITHUB_ENV  # Avoid threading issues
+        # Install scipy-openblas32
+        pip install scipy-openblas32
+        # Create pkg-config file
+        python -c "import scipy_openblas32 as sop; print(sop.get_pkg_config())" > openblas.pc
+        # Set environment variables
+        echo "PKG_CONFIG_PATH=$PWD" >> $GITHUB_ENV
+        echo "OPENBLAS_NUM_THREADS=1" >> $GITHUB_ENV
 
     # NOTE: No MacOS specific install.
     # We'll use the Accelerate framework instead of installing BLAS/LAPACK
