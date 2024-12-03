@@ -27,7 +27,7 @@ jobs:
       if: matrix.os == 'ubuntu-latest'
       run: |
         sudo apt-get update
-        sudo apt-get install -y gfortran libblas-dev liblapack-dev ninja meson
+        sudo apt-get install -y gfortran libblas-dev liblapack-dev ninja-build meson
 
     - name: Install system dependencies (macOS)
       if: matrix.os == 'macos-latest'
@@ -40,13 +40,11 @@ jobs:
       with:
         environment-name: test
         create-args: >-
-          python=${{ matrix.python-version }}
           gfortran
           openblas
           lapack
           ninja
           meson
-          pip
         cache-downloads: true
         cache-environment: true
 
