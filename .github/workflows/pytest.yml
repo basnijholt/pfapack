@@ -34,7 +34,7 @@ jobs:
         sudo apt-get update
         sudo apt-get install -y  libblas-dev liblapack-dev
 
-    - name: Setup Windows
+    - name: Install system dependencies (Windows)
       if: matrix.os == 'windows-latest'
       id: msys2
       uses: msys2/setup-msys2@v2
@@ -46,23 +46,18 @@ jobs:
         path-type: minimal
         release: false
 
-    - run: echo '${{ steps.msys2.outputs.msys2-location }}'
-
-    - name: Set Windows env
-      if: matrix.os == 'windows-latest'
-      shell: bash
-      run: |
-        set -e
-        # Add MSYS2 paths
-        echo "C:/msys64/mingw64/bin" >> $GITHUB_PATH
-        ls -la C:/msys64/mingw64
-        ls -la C:/msys64/mingw64/lib
-        ls -la C:/msys64/mingw64/include
-        # Set library and include paths for meson
-        echo "LIBRARY_PATH=C:/msys64/mingw64/lib" >> $GITHUB_ENV
-        echo "CPATH=C:/msys64/mingw64/include" >> $GITHUB_ENV
-        echo "PKG_CONFIG_PATH=C:/msys64/mingw64/lib/pkgconfig" >> $GITHUB_ENV
-        echo "OPENBLAS_NUM_THREADS=1" >> $GITHUB_ENV
+    # - name: Set Windows env
+    #   if: matrix.os == 'windows-latest'
+    #   shell: bash
+    #   run: |
+    #     set -e
+    #     # Add MSYS2 paths
+    #     echo "C:/msys64/mingw64/bin" >> $GITHUB_PATH
+    #     # Set library and include paths for meson
+    #     echo "LIBRARY_PATH=C:/msys64/mingw64/lib" >> $GITHUB_ENV
+    #     echo "CPATH=C:/msys64/mingw64/include" >> $GITHUB_ENV
+    #     echo "PKG_CONFIG_PATH=C:/msys64/mingw64/lib/pkgconfig" >> $GITHUB_ENV
+    #     echo "OPENBLAS_NUM_THREADS=1" >> $GITHUB_ENV
 
     # NOTE: No MacOS specific install.
     # We'll use the Accelerate framework instead of installing BLAS/LAPACK
