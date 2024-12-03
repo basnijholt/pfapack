@@ -18,7 +18,3 @@ repos:
     rev: "v1.13.0"
     hooks:
       - id: mypy
-        additional_dependencies:
-          - types-setuptools
-          - pandas-stubs
-          - types-psutil
