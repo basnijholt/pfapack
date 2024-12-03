@@ -53,6 +53,10 @@ jobs:
         # Print environment for debugging
         which gfortran
         gfortran --version
+        which ninja
+        ninja --version
+        which pip
+        pip --version
 
         # Install and run tests
         pip install -e . --config-settings=setup-args="-Dbuild_tests=enabled"
