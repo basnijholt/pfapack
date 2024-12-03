@@ -8,6 +8,10 @@ project('pfapack',
   ],
 )
 
+# Get compilers
+c_compiler = meson.get_compiler('c')
+fortran_compiler = meson.get_compiler('fortran')
+
 # Dependencies
 if host_machine.system() == 'darwin'
   add_project_link_arguments('-framework', 'Accelerate', language: ['c', 'fortran'])
@@ -15,7 +19,7 @@ if host_machine.system() == 'darwin'
   blas_dep = declare_dependency()
 else
   # Add rt library for clock_gettime
-  rt_dep = compiler.find_library('rt', required: false)
+  rt_dep = c_compiler.find_library('rt', required: false)
   if rt_dep.found()
     add_project_link_arguments('-lrt', language: ['c', 'fortran'])
   endif
