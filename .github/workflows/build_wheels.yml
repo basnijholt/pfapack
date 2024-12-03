@@ -52,7 +52,7 @@ jobs:
         uses: pypa/cibuildwheel@v2.22.0
         env:
           CIBW_BEFORE_ALL_LINUX: |
-            yum install -y lapack-devel blas-devel pkg-config
+            yum install -y lapack-devel blas-devel
           CIBW_BEFORE_BUILD: "pip install meson-python"
           CIBW_TEST_REQUIRES: "pytest numpy scipy"
           CIBW_TEST_COMMAND: "pytest {package}/tests"
