@@ -54,7 +54,7 @@ jobs:
           CIBW_BEFORE_ALL_LINUX: |
             yum install -y lapack-devel blas-devel
           CIBW_BEFORE_BUILD: "pip install meson-python"
-          CIBW_TEST_REQUIRES: "pytest numpy scipy"
+          CIBW_TEST_EXTRAS: "test"
           CIBW_TEST_COMMAND: "pytest {package}/tests"
           # Skip PyPy wheels for now
           CIBW_SKIP: "pp*"
