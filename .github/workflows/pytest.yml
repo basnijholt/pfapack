@@ -25,6 +25,8 @@ jobs:
 
     - uses: fortran-lang/setup-fortran@v1
       id: setup-fortran
+      with:
+        version: 12 # should be available on all runners
 
     - name: Install system dependencies (Ubuntu)
       if: matrix.os == 'ubuntu-latest'
