@@ -140,7 +140,7 @@ c_sources = files(
 )
 
 # Import Python module
-py = import('python').find_installation()
+py = import('python').find_installation(pure: false)
 
 # Build Fortran library
 libpfapack = shared_library('pfapack',
