@@ -40,13 +40,13 @@ jobs:
 
     - name: Install system dependencies (Windows)
       if: matrix.os == 'windows-latest'
-      run: |
-        # Add gcc/gfortran to PATH
-        echo "C:\msys64\mingw64\bin" >> $GITHUB_PATH
-        # Set pkg-config path for finding BLAS and LAPACK
-        echo "PKG_CONFIG_PATH=C:\msys64\mingw64\lib\pkgconfig" >> $GITHUB_ENV
-        # Install BLAS and LAPACK using pacman
-        C:\msys64\usr\bin\pacman -S --noconfirm mingw-w64-x86_64-openblas mingw-w64-x86_64-lapack
+      uses: msys2/setup-msys2@v2
+      with:
+        update: true
+        install: >-
+          mingw-w64-x86_64-gcc-fortran
+          mingw-w64-x86_64-openblas
+          mingw-w64-x86_64-lapack
 
     - name: Build and run C/Fortran tests
       run: |
