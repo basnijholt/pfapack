@@ -51,8 +51,12 @@ jobs:
       if: matrix.os == 'windows-latest'
       shell: bash
       run: |
+        set -e
         # Add MSYS2 paths
         echo "C:/msys64/mingw64/bin" >> $GITHUB_PATH
+        ls -la C:/msys64/mingw64
+        ls -la C:/msys64/mingw64/lib
+        ls -la C:/msys64/mingw64/include
         # Set library and include paths for meson
         echo "LIBRARY_PATH=C:/msys64/mingw64/lib" >> $GITHUB_ENV
         echo "CPATH=C:/msys64/mingw64/include" >> $GITHUB_ENV
