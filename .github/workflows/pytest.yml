@@ -34,12 +34,22 @@ jobs:
         sudo apt-get update
         sudo apt-get install -y  libblas-dev liblapack-dev
 
+    # - name: Install system dependencies (Windows)
+    #   if: matrix.os == 'windows-latest'
+    #   run: |
+    #     # Install MinGW-w64 using rtools
+    #     choco install rtools -y --no-progress --force --version=4.0.0.20220206
+    #     echo "c:\rtools40\ucrt64\bin;" >> $env:GITHUB_PATH
+
     - name: Install system dependencies (Windows)
       if: matrix.os == 'windows-latest'
-      run: |
-        # Install MinGW-w64 using rtools
-        choco install rtools -y --no-progress --force --version=4.0.0.20220206
-        echo "c:\rtools40\ucrt64\bin;" >> $env:GITHUB_PATH
+      uses: msys2/setup-msys2@v2
+      with:
+        update: true
+        install: >-
+          mingw-w64-x86_64-pkg-config
+          mingw-w64-x86_64-gcc-fortran
+        path-type: minimal
 
     - name: Install OpenBLAS (Windows)
       if: matrix.os == 'windows-latest'
