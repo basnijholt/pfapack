@@ -23,20 +23,30 @@ jobs:
       if: matrix.os == 'ubuntu-latest'
       run: |
         sudo apt-get update
-        sudo apt-get install -y gfortran libblas-dev liblapack-dev
+        sudo apt-get install -y gfortran libblas-dev liblapack-dev ninja-build meson
 
     - name: Install system dependencies (macOS)
       if: matrix.os == 'macos-latest'
       run: |
-        brew install gcc openblas lapack
+        brew install gcc openblas lapack ninja meson
 
-    - name: Install system dependencies (Windows)
+    - name: Setup Miniconda (Windows)
       if: matrix.os == 'windows-latest'
+      uses: conda-incubator/setup-miniconda@v3
+      with:
+        activate-environment: test
+        python-version: ${{ matrix.python-version }}
+        channels: conda-forge
+        channel-priority: strict
+
+    - name: Install Windows dependencies
+      if: matrix.os == 'windows-latest'
+      shell: bash -l {0}
       run: |
-        # Using conda to get BLAS/LAPACK on Windows
-        conda install -c conda-forge openblas lapack
+        conda install -y openblas lapack ninja meson gfortran
 
     - name: Set up Python ${{ matrix.python-version }}
+      if: matrix.os != 'windows-latest'  # Skip for Windows as conda handles Python
       uses: actions/setup-python@v5
       with:
         python-version: ${{ matrix.python-version }}
@@ -45,17 +55,25 @@ jobs:
       uses: astral-sh/setup-uv@v4
 
     - name: Install dependencies
+      shell: bash -l {0}  # Needed for conda activation on Windows
       run: |
         uv tool install tox --with tox-uv
         tox --version
 
     - name: Build and run C/Fortran tests
-      shell: bash
+      shell: bash -l {0}  # Needed for conda activation on Windows
       run: |
+        # Make sure we can find the compilers and libraries
+        if [ "$RUNNER_OS" == "Windows" ]; then
+          export PATH=$CONDA_PREFIX/Library/bin:$PATH
+          export LIBRARY_PATH=$CONDA_PREFIX/Library/lib:$LIBRARY_PATH
+          export LD_LIBRARY_PATH=$CONDA_PREFIX/Library/lib:$LD_LIBRARY_PATH
+        fi
         pip install -e . --config-settings=setup-args="-Dbuild_tests=enabled"
         cd build/cp* && meson test --verbose
 
     - name: Run Python tests
+      shell: bash -l {0}  # Needed for conda activation on Windows
       run: tox
 
     - name: Upload coverage to Codecov
