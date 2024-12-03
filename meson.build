@@ -9,41 +9,21 @@ project('pfapack',
 )
 
 # Dependencies
-# Dependencies
 if host_machine.system() == 'darwin'
   add_project_link_arguments('-framework', 'Accelerate', language: ['c', 'fortran'])
   lapack_dep = declare_dependency()
   blas_dep = declare_dependency()
 else
-  # Try pkg-config first
-  lapack_dep = dependency('lapack', required: false)
-  blas_dep = dependency('blas', required: false)
-  openblas_dep = dependency('openblas', required: false)
-
-  if not lapack_dep.found() or not blas_dep.found()
-    # Try finding the libraries directly
-    foreach libdir : ['/usr/lib', '/usr/lib64', '/usr/local/lib']
-      if not lapack_dep.found()
-        lapack_lib = compiler.find_library('lapack', dirs: [libdir], required: false)
-        if lapack_lib.found()
-          lapack_dep = declare_dependency(link_with: lapack_lib)
-        endif
-      endif
-      if not blas_dep.found()
-        blas_lib = compiler.find_library('blas', dirs: [libdir], required: false)
-        if blas_lib.found()
-          blas_dep = declare_dependency(link_with: blas_lib)
-        endif
-      endif
-    endforeach
+  # Add rt library for clock_gettime
+  rt_dep = compiler.find_library('rt', required: false)
+  if rt_dep.found()
+    add_project_link_arguments('-lrt', language: ['c', 'fortran'])
   endif
 
-  # If we still haven't found the libraries, error out with a helpful message
-  if not lapack_dep.found() or not blas_dep.found()
-    error('Could not find LAPACK/BLAS libraries. Please install them through your system package manager or conda/mamba.')
-  endif
+  # Find LAPACK and BLAS
+  lapack_dep = dependency('lapack', required: true)
+  blas_dep = dependency('blas', required: true)
 endif
-
 
 pfapack_dir = 'original_source'
 
