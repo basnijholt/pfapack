@@ -1,0 +1,5 @@
+option('build_tests',
+  type: 'feature',
+  value: 'enabled',
+  description: 'Build test executables',
+)

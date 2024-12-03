@@ -1,5 +1,4 @@
 name: pytest
-
 on:
   push:
     branches: [main]
@@ -13,29 +12,60 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
-        python-version: ["3.8", "3.9", "3.10", "3.11", "3.12", "3.13"]
+        python-version: ["3.10", "3.11", "3.12", "3.13"]
+
+    defaults:
+      run:
+        shell: bash -l {0}
+
     steps:
-      - uses: actions/checkout@v4
-      - shell: bash
-        run: echo "##[set-output name=branch;]$(echo ${GITHUB_REF#refs/heads/})"
-        id: extract_branch
-      - shell: bash
-        run: echo "##[set-output name=py_version;]$(py_ver=${{ matrix.python-version }} && echo ${py_ver//./})"
-        id: extract_py_version
-      - name: Install uv
-        uses: astral-sh/setup-uv@v4
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v5
-        with:
-          python-version: ${{ matrix.python-version }}
-      - name: Install dependencies
-        run: |
-          uv tool install tox --with tox-uv
-          tox --version
-      - name: Test
-        run: tox
-      - name: Upload coverage to Codecov
-        if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.13'
-        uses: codecov/codecov-action@v5
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }}
+    - uses: actions/checkout@v4
+      with:
+        submodules: recursive
+
+    - uses: fortran-lang/setup-fortran@v1
+      id: setup-fortran
+      with:
+        version: 12 # should be available on all runners
+
+    - name: Install system dependencies (Ubuntu)
+      if: matrix.os == 'ubuntu-latest'
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y  libblas-dev liblapack-dev
+
+    - name: Install system dependencies (Windows)
+      if: matrix.os == 'windows-latest'
+      id: msys2
+      uses: msys2/setup-msys2@v2
+      with:
+        msystem: MINGW64
+        install: >-
+          mingw-w64-x86_64-gcc-fortran
+          mingw-w64-x86_64-openblas
+        path-type: minimal
+        release: false
+
+    # NOTE: No MacOS specific install.
+    # We'll use the Accelerate framework instead of installing BLAS/LAPACK
+
+    - name: Build and run C/Fortran tests
+      run: |
+        # Install and run tests
+        pip install -U meson pip ninja
+        pip install -e . --config-settings=setup-args="-Dbuild_tests=enabled"
+        cd build/cp* && meson test --verbose
+
+    - name: Install test dependencies
+      run: |
+        pip install ".[test]"
+
+    - name: Run Python tests
+      run: |
+        pytest tests --cov --cov-append --cov-report=term-missing
+
+    - name: Upload coverage to Codecov
+      if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.13'
+      uses: codecov/codecov-action@v5
+      with:
+        token: ${{ secrets.CODECOV_TOKEN }}
