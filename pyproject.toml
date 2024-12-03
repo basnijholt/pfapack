@@ -90,6 +90,7 @@ addopts = """
     --cov-fail-under=30
     --cov-report=term-missing
 """
+norecursedirs = ["docs"]
 
 [tool.coverage.run]
 branch = true
