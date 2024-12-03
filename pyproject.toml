@@ -11,10 +11,9 @@ authors = [
     # Packing author
     { name = "Bas Nijholt", email = "bas@nijho.lt" },
     # Code author
-
-    {name = "Michael Wimmer", email = "m.t.wimmer@tudelft.nl" },
+    { name = "Michael Wimmer", email = "m.t.wimmer@tudelft.nl" },
 ]
-license = {text = "MIT"}
+license = { text = "MIT" }
 classifiers = [
     "Intended Audience :: Science/Research",
     "Operating System :: OS Independent",
@@ -32,12 +31,7 @@ classifiers = [
 dependencies = ["scipy", "numpy"]
 
 [project.optional-dependencies]
-docs = [
-    "sphinx",
-    "sphinx-rtd-theme",
-    "m2r",
-    "sphinxcontrib.apidoc",
-]
+docs = ["sphinx", "sphinx-rtd-theme", "m2r", "sphinxcontrib.apidoc"]
 dev = ["pre-commit"]
 test = ["pytest", "pytest-cov", "pytest-mypy", "tox"]
 
