@@ -14,75 +14,32 @@ jobs:
         os: [ubuntu-latest, macos-latest, windows-latest]
         python-version: ["3.10", "3.11", "3.12", "3.13"]
 
+    defaults:
+      run:
+        shell: bash -l {0}
+
     steps:
     - uses: actions/checkout@v4
       with:
         submodules: recursive
 
-    - name: Install system dependencies (Ubuntu)
-      if: matrix.os == 'ubuntu-latest'
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y gfortran libblas-dev liblapack-dev
-        # Don't use system meson, install via pip instead
-        pip install ninja meson
-
-    - name: Install system dependencies (macOS)
-      if: matrix.os == 'macos-latest'
-      run: |
-        brew install gcc openblas lapack ninja
-        # Don't use brew's meson, install via pip instead
-        pip install meson
-        # Make sure gfortran is in the PATH
-        echo "/usr/local/bin" >> $GITHUB_PATH
-        # Link gfortran where it can be found
-        sudo ln -s /usr/local/bin/gfortran-13 /usr/local/bin/gfortran
-
-    - name: Setup Miniconda (Windows)
-      if: matrix.os == 'windows-latest'
-      uses: conda-incubator/setup-miniconda@v3
+    - uses: mamba-org/setup-micromamba@v2
       with:
-        activate-environment: test
-        python-version: ${{ matrix.python-version }}
-        channels: conda-forge
-        channel-priority: strict
-
-    - name: Install Windows dependencies
-      if: matrix.os == 'windows-latest'
-      shell: bash -l {0}
-      run: |
-        conda install -y openblas lapack ninja meson gfortran
-
-    - name: Set up Python ${{ matrix.python-version }}
-      if: matrix.os != 'windows-latest'  # Skip for Windows as conda handles Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: ${{ matrix.python-version }}
-
-    - name: Install uv
-      uses: astral-sh/setup-uv@v4
-
-    - name: Install dependencies
-      shell: bash -l {0}
-      run: |
-        uv tool install tox --with tox-uv
-        tox --version
+        environment-name: test
+        create-args: >-
+          python=${{ matrix.python-version }}
+          gfortran
+          openblas
+          lapack
+          ninja
+          meson
+          pip
+        cache-downloads: true
+        cache-environment: true
 
     - name: Build and run C/Fortran tests
-      shell: bash -l {0}
-      env:
-        # Add environment variables to help find libraries
-        LIBRARY_PATH: ${{ runner.os == 'macOS' && '/usr/local/opt/lapack/lib:/usr/local/opt/openblas/lib' || '' }}
-        CPATH: ${{ runner.os == 'macOS' && '/usr/local/opt/lapack/include:/usr/local/opt/openblas/include' || '' }}
       run: |
-        # Make sure we can find the compilers and libraries
-        if [ "$RUNNER_OS" == "Windows" ]; then
-          export PATH=$CONDA_PREFIX/Library/bin:$PATH
-          export LIBRARY_PATH=$CONDA_PREFIX/Library/lib:$LIBRARY_PATH
-          export LD_LIBRARY_PATH=$CONDA_PREFIX/Library/lib:$LD_LIBRARY_PATH
-        fi
-
-        # Print compiler versions for debugging
+        # Print environment for debugging
         which gfortran
         gfortran --version
 
@@ -90,9 +47,13 @@ jobs:
         pip install -e . --config-settings=setup-args="-Dbuild_tests=enabled"
         cd build/cp* && meson test --verbose
 
+    - name: Install test dependencies
+      run: |
+        pip install ".[test]"
+
     - name: Run Python tests
-      shell: bash -l {0}
-      run: tox
+      run: |
+        pytest tests --cov --cov-append --cov-report=term-missing
 
     - name: Upload coverage to Codecov
       if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.13'
