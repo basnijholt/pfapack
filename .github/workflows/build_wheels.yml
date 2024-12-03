@@ -21,6 +21,11 @@ jobs:
         with:
           submodules: recursive
 
+      - uses: fortran-lang/setup-fortran@v1
+        id: setup-fortran
+        with:
+          version: 12 # should be available on all runners
+
       - name: Install system dependencies (Ubuntu)
         if: runner.os == 'Linux'
         run: |
