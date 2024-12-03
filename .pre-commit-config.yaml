@@ -12,9 +12,12 @@ repos:
     rev: "v0.8.1"
     hooks:
       - id: ruff
+        exclude: original_source/*
         args: ["--fix"]
       - id: ruff-format
   - repo: https://github.com/pre-commit/mirrors-mypy
     rev: "v1.13.0"
     hooks:
       - id: mypy
+
+exclude: original_source/*
