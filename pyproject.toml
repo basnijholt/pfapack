@@ -1,6 +1,6 @@
 [build-system]
-build-backend = "hatchling.build"
-requires = ["hatchling", "versioningit"]
+build-backend = "mesonpy"
+requires = ["meson-python", "versioningit"]
 
 [project]
 name = "pfapack"
