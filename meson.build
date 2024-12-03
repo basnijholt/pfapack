@@ -118,9 +118,16 @@ libpfapack = shared_library('pfapack',
   install: true,
 )
 
+# Include directories
+c_include_dir = include_directories(
+  join_paths(pfapack_dir, 'c_interface'),
+  join_paths(pfapack_dir, 'c_interface', 'TESTING'),
+)
+
 # Build C library
 libcpfapack = shared_library('cpfapack',
   c_sources,
+  include_directories: c_include_dir,
   link_with: libpfapack,
   dependencies: [lapack_dep, blas_dep],
   install: true,
@@ -136,3 +143,62 @@ py.install_sources(
   pure: false,
   subdir: 'pfapack'
 )
+
+
+# Build test executables
+if get_option('build_tests').allowed()
+  # C interface tests
+  c_test_sources = files(
+    join_paths(pfapack_dir, 'c_interface', 'TESTING', 'test.c'),
+    join_paths(pfapack_dir, 'c_interface', 'TESTING', 'check.f90'),
+  )
+
+  c_test_exe = executable('test_c_interface',
+    c_test_sources,
+    include_directories: c_include_dir,
+    link_with: [libpfapack, libcpfapack],
+    dependencies: [lapack_dep, blas_dep],
+  )
+
+  # Common Fortran test sources
+  fortran_test_common = files(
+    join_paths(pfapack_dir, 'fortran', 'TESTING', 'check_decomp.f90'),
+    join_paths(pfapack_dir, 'fortran', 'TESTING', 'check_decomp_c.f90'),
+    join_paths(pfapack_dir, 'fortran', 'TESTING', 'check_decomp_d.f90'),
+    join_paths(pfapack_dir, 'fortran', 'TESTING', 'check_decomp_s.f90'),
+    join_paths(pfapack_dir, 'fortran', 'TESTING', 'check_decomp_z.f90'),
+    join_paths(pfapack_dir, 'fortran', 'TESTING', 'check_pfaffian.f90'),
+    join_paths(pfapack_dir, 'fortran', 'TESTING', 'check_pfaffian_c.f90'),
+    join_paths(pfapack_dir, 'fortran', 'TESTING', 'check_pfaffian_d.f90'),
+    join_paths(pfapack_dir, 'fortran', 'TESTING', 'check_pfaffian_s.f90'),
+    join_paths(pfapack_dir, 'fortran', 'TESTING', 'check_pfaffian_z.f90'),
+    join_paths(pfapack_dir, 'fortran', 'TESTING', 'error.f90'),
+    join_paths(pfapack_dir, 'fortran', 'TESTING', 'matrix_tools.f90'),
+    join_paths(pfapack_dir, 'fortran', 'TESTING', 'matrix_tools_c.f90'),
+    join_paths(pfapack_dir, 'fortran', 'TESTING', 'matrix_tools_d.f90'),
+    join_paths(pfapack_dir, 'fortran', 'TESTING', 'matrix_tools_s.f90'),
+    join_paths(pfapack_dir, 'fortran', 'TESTING', 'matrix_tools_z.f90'),
+    join_paths(pfapack_dir, 'fortran', 'TESTING', 'test_ilaenv.f'),
+  )
+
+  # Test pfaff executable
+  test_pfaff_exe = executable('test_pfaff',
+    [fortran_test_common,
+     join_paths(pfapack_dir, 'fortran', 'TESTING', 'test_pfaff.f90')],
+    link_with: [libpfapack],
+    dependencies: [lapack_dep, blas_dep],
+  )
+
+  # Test skew executable
+  test_skew_exe = executable('test_skew',
+    [fortran_test_common,
+     join_paths(pfapack_dir, 'fortran', 'TESTING', 'test_skew.f90')],
+    link_with: [libpfapack],
+    dependencies: [lapack_dep, blas_dep],
+  )
+
+  # Register tests
+  test('C interface tests', c_test_exe)
+  test('Fortran pfaff tests', test_pfaff_exe)
+  test('Fortran skew tests', test_skew_exe)
+endif
