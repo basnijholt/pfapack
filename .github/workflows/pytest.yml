@@ -34,15 +34,26 @@ jobs:
         sudo apt-get update
         sudo apt-get install -y  libblas-dev liblapack-dev
 
-    - name: Install system dependencies (Windows)
+    - name: Setup Windows
       if: matrix.os == 'windows-latest'
       uses: msys2/setup-msys2@v2
       with:
-        update: true
+        msystem: MINGW64
         install: >-
           mingw-w64-x86_64-gcc-fortran
           mingw-w64-x86_64-openblas
-        location: D:\msys64
+        path-type: minimal
+
+    - name: Set Windows env
+      if: matrix.os == 'windows-latest'
+      shell: bash
+      run: |
+        # Add MSYS2 paths
+        echo "C:/msys64/mingw64/bin" >> $GITHUB_PATH
+        # Set library and include paths for meson
+        echo "LIBRARY_PATH=C:/msys64/mingw64/lib" >> $GITHUB_ENV
+        echo "CPATH=C:/msys64/mingw64/include" >> $GITHUB_ENV
+        echo "OPENBLAS_NUM_THREADS=1" >> $GITHUB_ENV
 
     # NOTE: No MacOS specific install.
     # We'll use the Accelerate framework instead of installing BLAS/LAPACK

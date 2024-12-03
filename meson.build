@@ -20,6 +20,12 @@ if host_machine.system() == 'darwin'
   add_project_link_arguments('-framework', 'Accelerate', language: ['c', 'fortran'])
   lapack_dep = declare_dependency()
   blas_dep = declare_dependency()
+elif host_machine.system() == 'windows'
+  # On Windows, find OpenBLAS which includes LAPACK
+  openblas_lib = c_compiler.find_library('openblas', required: true)
+  # OpenBLAS includes both BLAS and LAPACK
+  lapack_dep = declare_dependency(dependencies: [openblas_lib])
+  blas_dep = declare_dependency(dependencies: [openblas_lib])
 else
   # Add rt library for clock_gettime
   rt_dep = c_compiler.find_library('rt', required: false)
