@@ -139,6 +139,9 @@ c_sources = files(
   join_paths(pfapack_dir, 'c_interface', 'skbtrd.c'),
 )
 
+# Import Python module
+py = import('python').find_installation()
+
 # Build Fortran library
 libpfapack = shared_library('pfapack',
   fortran_sources,
@@ -164,7 +167,6 @@ libcpfapack = shared_library('cpfapack',
 )
 
 # Python module
-py = import('python').find_installation()
 py.install_sources(
   ['pfapack/__init__.py',
    'pfapack/_version.py',
