@@ -23,15 +23,26 @@ jobs:
       with:
         submodules: recursive
 
-    - uses: mamba-org/setup-micromamba@v2
+    - name: Install system dependencies (Ubuntu)
+      if: matrix.os == 'ubuntu-latest'
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y gfortran libblas-dev liblapack-dev ninja meson
+
+    - name: Install system dependencies (macOS)
+      if: matrix.os == 'macos-latest'
+      run: |
+        brew install gcc openblas lapack ninja meson
+
+    - name: Install system dependencies (Windows)
+      if: matrix.os == 'windows-latest'
+      uses: mamba-org/setup-micromamba@v2
       with:
         environment-name: test
         create-args: >-
           python=${{ matrix.python-version }}
           gfortran
           openblas
-          liblapack
-          libblas
           lapack
           ninja
           meson
