@@ -26,12 +26,6 @@ jobs:
         with:
           version: 12 # should be available on all runners
 
-      - name: Install system dependencies (Ubuntu)
-        if: runner.os == 'Linux'
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y libblas-dev liblapack-dev gfortran pkg-config
-
       - name: Install system dependencies (Windows)
         if: runner.os == 'Windows'
         uses: msys2/setup-msys2@v2
@@ -57,6 +51,8 @@ jobs:
       - name: Build wheels
         uses: pypa/cibuildwheel@v2.22.0
         env:
+          CIBW_BEFORE_ALL_LINUX: |
+            yum install -y lapack-devel blas-devel pkg-config
           CIBW_BEFORE_BUILD: "pip install meson-python"
           CIBW_TEST_REQUIRES: "pytest numpy scipy"
           CIBW_TEST_COMMAND: "pytest {package}/tests"
