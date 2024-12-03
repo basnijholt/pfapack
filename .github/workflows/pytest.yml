@@ -43,6 +43,9 @@ jobs:
           mingw-w64-x86_64-openblas
           mingw-w64-x86_64-lapack
 
+    # NOTE: No MacOS specific install.
+    # We'll use the Accelerate framework instead of installing BLAS/LAPACK
+
     - name: Build and run C/Fortran tests
       run: |
         # Print environment for debugging
