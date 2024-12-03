@@ -13,6 +13,8 @@ c_compiler = meson.get_compiler('c')
 fortran_compiler = meson.get_compiler('fortran')
 
 # Dependencies
+thread_dep = dependency('threads')
+
 if host_machine.system() == 'darwin'
   add_project_link_arguments('-framework', 'Accelerate', language: ['c', 'fortran'])
   lapack_dep = declare_dependency()
@@ -125,7 +127,7 @@ c_sources = files(
 # Build Fortran library
 libpfapack = shared_library('pfapack',
   fortran_sources,
-  dependencies: [lapack_dep, blas_dep],
+  dependencies: [lapack_dep, blas_dep, thread_dep],
   install: true,
 )
 
@@ -140,7 +142,7 @@ libcpfapack = shared_library('cpfapack',
   c_sources,
   include_directories: c_include_dir,
   link_with: libpfapack,
-  dependencies: [lapack_dep, blas_dep],
+  dependencies: [lapack_dep, blas_dep, thread_dep],
   install: true,
 )
 
@@ -168,7 +170,7 @@ if get_option('build_tests').allowed()
     c_test_sources,
     include_directories: c_include_dir,
     link_with: [libpfapack, libcpfapack],
-    dependencies: [lapack_dep, blas_dep],
+    dependencies: [lapack_dep, blas_dep, thread_dep],
   )
 
   # Common Fortran test sources
@@ -197,7 +199,7 @@ if get_option('build_tests').allowed()
     [fortran_test_common,
      join_paths(pfapack_dir, 'fortran', 'TESTING', 'test_pfaff.f90')],
     link_with: [libpfapack],
-    dependencies: [lapack_dep, blas_dep],
+    dependencies: [lapack_dep, blas_dep, thread_dep],
   )
 
   # Test skew executable
@@ -205,7 +207,7 @@ if get_option('build_tests').allowed()
     [fortran_test_common,
      join_paths(pfapack_dir, 'fortran', 'TESTING', 'test_skew.f90')],
     link_with: [libpfapack],
-    dependencies: [lapack_dep, blas_dep],
+    dependencies: [lapack_dep, blas_dep, thread_dep],
   )
 
   # Register tests
