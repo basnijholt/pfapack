@@ -32,13 +32,11 @@ jobs:
     - name: Install system dependencies (macOS)
       if: matrix.os == 'macos-latest'
       run: |
-        brew install gcc openblas lapack ninja
-        # Create symlinks to ensure gfortran is in PATH
-        sudo ln -sf $(brew --prefix)/bin/gfortran-* $(brew --prefix)/bin/gfortran
-        # Add brew path to PATH
-        echo "$(brew --prefix)/bin" >> $GITHUB_PATH
+        # Create symlink to an existing gfortran version (preferably the latest)
+        sudo ln -sf $(which gfortran-13 || which gfortran-12 || which gfortran-11 || which gfortran-10) /usr/local/bin/gfortran
         # Verify installation
         gfortran --version
+        # We'll use the Accelerate framework instead of installing BLAS/LAPACK
 
     - name: Install system dependencies (Windows)
       if: matrix.os == 'windows-latest'
