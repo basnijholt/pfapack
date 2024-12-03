@@ -15,3 +15,7 @@ if not __version__:
     else:
         PROJECT_DIR = Path(__file__).parent.parent
         __version__ = versioningit.get_version(project_dir=PROJECT_DIR)
+
+
+if __name__ == "__main__":
+    print(__version__)

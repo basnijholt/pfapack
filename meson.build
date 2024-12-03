@@ -6,6 +6,7 @@ project('pfapack',
     'c_std=c99',
     'fortran_std=legacy',
   ],
+  version: run_command('pfapack/_version.py', check: true).stdout().strip(),
 )
 
 # Get compilers
