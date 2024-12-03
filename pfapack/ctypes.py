@@ -64,8 +64,8 @@ def pfaffian(
         If True, take special care to avoid numerical under- or
         overflow (at the cost of possible additional round-off errors).
     """
-    uplo: bytes = uplo.encode()
-    method: bytes = method.encode()
+    uplo: bytes = uplo.encode()  # type: ignore[no-redef]
+    method: bytes = method.encode()  # type: ignore[no-redef]
     assert np.ndim(matrix) == 2 and np.shape(matrix)[0] == np.shape(matrix)[1]
     if np.iscomplex(matrix).any():
         a = np.zeros((2,) + np.shape(matrix), dtype=np.float64, order="F")
@@ -80,18 +80,18 @@ def pfaffian(
         else:
             pfaffian = (ctypes.c_double * 2)(0.0, 0.0)
             success = skpfa_z(matrix.shape[0], a, pfaffian, uplo, method)
-            pfaffian = pfaffian[0] + 1j * pfaffian[1]
+            pfaffian = pfaffian[0] + 1j * pfaffian[1]  # type: ignore[assignment]
     else:
         matrix = np.asarray(matrix, dtype=np.float64, order="F")
         if avoid_overflow:
             pfaffian = (ctypes.c_double * 2)(0.0, 0.0)
             success = skpf10_d(matrix.shape[0], matrix, pfaffian, uplo, method)
-            pfaffian = from_exp(pfaffian[0], pfaffian[1])
+            pfaffian = from_exp(pfaffian[0], pfaffian[1])  # type: ignore[assignment]
         else:
-            pfaffian = ctypes.c_double(0.0)
+            pfaffian = ctypes.c_double(0.0)  # type: ignore[assignment]
             success = skpfa_d(
                 matrix.shape[0], matrix, ctypes.byref(pfaffian), uplo, method
             )
-            pfaffian = pfaffian.value
+            pfaffian = pfaffian.value  # type: ignore[misc]
     assert success == 0
     return pfaffian
