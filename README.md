@@ -8,6 +8,7 @@ Code and algorithms are taken from [arXiv:1102.3440](https://arxiv.org/abs/1102.
 [![docs](https://img.shields.io/readthedocs/pfapack)](https://pfapack.readthedocs.io)
 [![version](https://img.shields.io/pypi/v/pfapack)](https://pypi.org/project/pfapack/)
 [![PyPI - Python Version](https://img.shields.io/pypi/pyversions/pfapack)](https://pypi.org/project/pfapack/)
+[![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
 
 ### Install
 Recommended way (because it includes faster C/FORTRAN bindings)
