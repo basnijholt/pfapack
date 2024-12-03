@@ -22,10 +22,18 @@ if host_machine.system() == 'darwin'
   blas_dep = declare_dependency()
 elif host_machine.system() == 'windows'
   # On Windows, find OpenBLAS which includes LAPACK
-  openblas_lib = c_compiler.find_library('openblas', required: true)
+  openblas_lib = dependency('openblas', required: false)
+  if not openblas_lib.found()
+    # Fallback to manual detection
+    compiler = meson.get_compiler('c')
+    openblas_lib = compiler.find_library('libopenblas',
+      dirs: ['C:/msys64/mingw64/lib'],
+      required: true)
+  endif
   # OpenBLAS includes both BLAS and LAPACK
   lapack_dep = declare_dependency(dependencies: [openblas_lib])
   blas_dep = declare_dependency(dependencies: [openblas_lib])
+
 else
   # Add rt library for clock_gettime
   rt_dep = c_compiler.find_library('rt', required: false)
