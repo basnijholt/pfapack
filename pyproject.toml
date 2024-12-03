@@ -81,3 +81,21 @@ ignore_missing_imports = true
 [[tool.mypy.overrides]]
 module = "tests.*"
 ignore_errors = true
+
+[tool.pytest.ini_options]
+addopts = """
+    --durations=5
+    --cov=pfapack
+    --cov-append
+    --cov-fail-under=30
+    --cov-report=term-missing
+"""
+
+[tool.coverage.run]
+branch = true
+parallel = true
+source = ["pfapack"]
+
+[tool.coverage.report]
+show_missing = true
+precision = 2
