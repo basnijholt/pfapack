@@ -144,6 +144,7 @@ libpfapack = shared_library('pfapack',
   fortran_sources,
   dependencies: [lapack_dep, blas_dep, thread_dep, m_dep],
   install: true,
+  install_dir: py.get_install_dir() / 'pfapack',  # Install in package directory
 )
 
 # Include directories
@@ -159,6 +160,7 @@ libcpfapack = shared_library('cpfapack',
   link_with: libpfapack,
   dependencies: [lapack_dep, blas_dep, thread_dep, m_dep],
   install: true,
+  install_dir: py.get_install_dir() / 'pfapack',  # Install in package directory
 )
 
 # Python module
