@@ -30,6 +30,8 @@ jobs:
           python=${{ matrix.python-version }}
           gfortran
           openblas
+          liblapack
+          libblas
           lapack
           ninja
           meson
