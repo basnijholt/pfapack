@@ -23,20 +23,14 @@ jobs:
       with:
         submodules: recursive
 
+    - uses: fortran-lang/setup-fortran@v1
+      id: setup-fortran
+
     - name: Install system dependencies (Ubuntu)
       if: matrix.os == 'ubuntu-latest'
       run: |
         sudo apt-get update
-        sudo apt-get install -y gfortran libblas-dev liblapack-dev
-
-    - name: Install system dependencies (macOS)
-      if: matrix.os == 'macos-latest'
-      run: |
-        # Create symlink to an existing gfortran version (preferably the latest)
-        sudo ln -sf $(which gfortran-13 || which gfortran-12 || which gfortran-11 || which gfortran-10) /usr/local/bin/gfortran
-        # Verify installation
-        gfortran --version
-        # We'll use the Accelerate framework instead of installing BLAS/LAPACK
+        sudo apt-get install -y  libblas-dev liblapack-dev
 
     - name: Install system dependencies (Windows)
       if: matrix.os == 'windows-latest'
@@ -44,7 +38,6 @@ jobs:
       with:
         update: true
         install: >-
-          mingw-w64-x86_64-gcc-fortran
           mingw-w64-x86_64-openblas
           mingw-w64-x86_64-lapack
 
