@@ -40,48 +40,15 @@ jobs:
       with:
         update: true
         install: >-
-          mingw-w64-x86_64-pkg-config
           mingw-w64-x86_64-gcc-fortran
-        path-type: minimal
+          mingw-w64-x86_64-openblas
         location: D:\msys64
-
-    - name: Set up Windows environment
-      if: matrix.os == 'windows-latest'
-      shell: bash
-      run: |
-        set -e
-        # Add MSYS2 paths to PATH
-        echo "D:/msys64/mingw64/bin" >> $GITHUB_PATH
-        echo "D:/msys64/usr/bin" >> $GITHUB_PATH
-        # Verify pkg-config installation
-        which pkg-config
-        pkg-config --version
-
-    - name: Install OpenBLAS (Windows)
-      if: matrix.os == 'windows-latest'
-      shell: msys2 {0}  # Use MSYS2's shell
-      run: |
-        # Install scipy-openblas32
-        pip install scipy-openblas32
-        # Create pkg-config file
-        mkdir -p /mingw64/lib/pkgconfig
-        python -c "import scipy_openblas32 as sop; print(sop.get_pkg_config())" > /mingw64/lib/pkgconfig/openblas.pc
-        # Set environment variables
-        echo "PKG_CONFIG_PATH=/mingw64/lib/pkgconfig" >> $GITHUB_ENV
-        echo "OPENBLAS_NUM_THREADS=1" >> $GITHUB_ENV
-        # Verify installation
-        pkg-config --version
-        pkg-config --list-all
 
     # NOTE: No MacOS specific install.
     # We'll use the Accelerate framework instead of installing BLAS/LAPACK
 
     - name: Build and run C/Fortran tests
       run: |
-        # Print environment for debugging
-        which gfortran
-        gfortran --version
-
         # Install and run tests
         pip install -U meson pip ninja
         pip install -e . --config-settings=setup-args="-Dbuild_tests=enabled"
