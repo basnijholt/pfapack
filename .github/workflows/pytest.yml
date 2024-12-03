@@ -58,7 +58,7 @@ jobs:
         pip --version
 
         # Install and run tests
-        pip install meson
+        pip install -U meson pip
         pip install -e . --config-settings=setup-args="-Dbuild_tests=enabled"
         cd build/cp* && meson test --verbose
 
