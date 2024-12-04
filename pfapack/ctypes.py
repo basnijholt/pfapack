@@ -42,7 +42,7 @@ def _find_library() -> ctypes.CDLL:
     if sys.platform == "darwin":
         lib_name = "libcpfapack.dylib"
     elif sys.platform == "win32":
-        lib_name = "cpfapack.dll"
+        lib_name = "libcpfapack.dll"
     else:
         lib_name = "libcpfapack.so"
 
