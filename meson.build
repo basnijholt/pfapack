@@ -179,11 +179,15 @@ libcpfapack = shared_library('cpfapack',
 
 # === Python module installation ===
 py.install_sources(
-  ['pfapack/__init__.py',
-   'pfapack/_version.py',
-   'pfapack/ctypes.py',
-   'pfapack/exceptions.py',
-   'pfapack/pfaffian.py'],
+  [
+    'pfapack/__init__.py',
+    'pfapack/_version.py',
+    'pfapack/ctypes.py',
+    'pfapack/exceptions.py',
+    'pfapack/pfaffian.py',
+    # Add OpenBLAS DLL for Windows
+    'pfapack/libopenblas.dll',  # This will be ignored on non-Windows
+],
   pure: false,
   subdir: 'pfapack'
 )
