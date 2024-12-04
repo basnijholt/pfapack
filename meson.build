@@ -33,13 +33,6 @@ elif host_machine.system() == 'windows'
     openblas_lib = c_compiler.find_library('libopenblas',
       dirs: ['C:/msys64/mingw64/lib'],
       required: true)
-      if openblas_lib.found()
-        fs = import('fs')
-        fs.copyfile(
-            join_paths('C:', 'msys64', 'mingw64', 'bin', 'libopenblas.dll'),
-            join_paths('pfapack', 'libopenblas.dll')
-        )
-      endif
   endif
   # OpenBLAS includes both BLAS and LAPACK
   lapack_dep = declare_dependency(dependencies: [openblas_lib])
