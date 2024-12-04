@@ -6,5 +6,5 @@ option('build_tests',
 option('static',
   type: 'boolean',
   value: false,
-  description: 'Build static libraries instead of shared libraries'
+  description: 'Build static libraries instead of shared libraries on Linux or macOS (Windows always builds static libraries)',
 )

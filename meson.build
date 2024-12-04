@@ -22,19 +22,32 @@ if host_machine.system() == 'darwin'
   lapack_dep = declare_dependency()
   blas_dep = declare_dependency()
 elif host_machine.system() == 'windows'
-  # On Windows, find OpenBLAS which includes LAPACK
-  openblas_lib = dependency('openblas', required: false)
-  if not openblas_lib.found()
-    # Fallback to manual detection
-    compiler = meson.get_compiler('c')
-    openblas_lib = compiler.find_library('libopenblas',
-      dirs: ['C:/msys64/mingw64/lib'],
-      required: true)
-  endif
-  # OpenBLAS includes both BLAS and LAPACK
-  lapack_dep = declare_dependency(dependencies: [openblas_lib])
-  blas_dep = declare_dependency(dependencies: [openblas_lib])
+  # On Windows with static build, we need OpenBLAS
+  # First try pkg-config
+  openblas_dep = dependency('openblas', required: false)
 
+  if not openblas_dep.found()
+    # Try to find the DLL/import library
+    openblas_lib = c_compiler.find_library('openblas',
+      dirs: ['C:/msys64/mingw64/lib'],
+      required: true
+    )
+    openblas_dep = declare_dependency(
+      dependencies: [openblas_lib],
+      include_directories: include_directories('C:/msys64/mingw64/include')
+    )
+  endif
+
+  # OpenBLAS includes both BLAS and LAPACK
+  lapack_dep = openblas_dep
+  blas_dep = openblas_dep
+
+  # Copy OpenBLAS DLL to the package directory
+  if static_build
+    install_data('C:/msys64/mingw64/bin/libopenblas.dll',
+      install_dir: py.get_install_dir() / 'pfapack'
+    )
+  endif
 else
   # Add rt library for clock_gettime
   rt_dep = c_compiler.find_library('rt', required: false)
@@ -173,17 +186,6 @@ static_build = get_option('static') or host_machine.system() == 'windows'
 
 # Platform-specific library type
 if static_build
-  if host_machine.system() == 'windows'
-    # On Windows: static libraries and explicitly link OpenBLAS
-    compiler = meson.get_compiler('c')
-
-    # Find OpenBLAS static library
-    openblas_lib = compiler.find_library('openblas',
-        dirs: ['C:/msys64/mingw64/lib'],
-        static: true,
-        required: true
-    )
-  endif
   # Build Fortran library as static
   libpfapack = static_library('pfapack',
     fortran_sources,
