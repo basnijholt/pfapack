@@ -15,14 +15,8 @@ fortran_compiler = meson.get_compiler('fortran')
 thread_dep = dependency('threads')
 m_dep = c_compiler.find_library('m', required: false)  # math library
 
-# === Python and NumPy setup ===
+# === Python setup ===
 py = import('python').find_installation(pure: false)
-numpy_dep = dependency('numpy')
-
-numpy_include = run_command(py,
-  ['-c', 'import numpy; print(numpy.get_include())'],
-  check: true
-).stdout().strip()
 
 # === Platform specific BLAS/LAPACK setup ===
 if host_machine.system() == 'darwin'
@@ -32,37 +26,29 @@ if host_machine.system() == 'darwin'
   blas_dep = declare_dependency()
 
 elif host_machine.system() == 'windows'
-  # Try to get OpenBLAS from NumPy
-  numpy_dir = run_command(py,
-    ['-c', 'import os, numpy; print(os.path.dirname(numpy.__file__))'],
-    check: true
-  ).stdout().strip()
-
   openblas_lib = c_compiler.find_library('openblas',
-    dirs: [numpy_dir],
-    required: true
+      dirs: ['/mingw64/lib'],
+      required: true
   )
   lapack_dep = declare_dependency(dependencies: [openblas_lib])
   blas_dep = declare_dependency(dependencies: [openblas_lib])
 
 else # Linux
-  # First try system BLAS/LAPACK
-  blas_dep = dependency('blas', required: false)
-  lapack_dep = dependency('lapack', required: false)
+  # Try multiple methods to find OpenBLAS
+  openblas_dep = dependency('openblas', required: false)
+  if not openblas_dep.found()
+      # Fallback to manual detection
+      openblas_dep = c_compiler.find_library('openblas', required: false)
+  endif
 
-  if not blas_dep.found() or not lapack_dep.found()
-    # Fall back to NumPy's OpenBLAS
-    numpy_dir = run_command(py,
-      ['-c', 'import os, numpy; print(os.path.dirname(numpy.__file__))'],
-      check: true
-    ).stdout().strip()
-
-    openblas_lib = c_compiler.find_library('openblas',
-      dirs: [numpy_dir],
-      required: true
-    )
-    blas_dep = openblas_lib
-    lapack_dep = openblas_lib
+  if openblas_dep.found()
+      # OpenBLAS includes both BLAS and LAPACK
+      blas_dep = declare_dependency(dependencies: [openblas_dep])
+      lapack_dep = declare_dependency(dependencies: [openblas_dep])
+  else
+      # Fall back to separate BLAS and LAPACK
+      blas_dep = c_compiler.find_library('blas', required: true)
+      lapack_dep = c_compiler.find_library('lapack', required: true)
   endif
 
   # Add rt library for clock_gettime

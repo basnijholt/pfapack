@@ -50,6 +50,13 @@ jobs:
         path-type: minimal
         release: false
 
+    - name: Copy OpenBLAS DLL (Windows)
+      if: runner.os == 'Windows'
+      shell: msys2 {0}
+      run: |
+        # Copy OpenBLAS DLL to the package directory
+        cp /mingw64/bin/libopenblas.dll pfapack/
+
     # NOTE: No MacOS specific install.
     # We'll use the Accelerate framework instead of installing BLAS/LAPACK
 
