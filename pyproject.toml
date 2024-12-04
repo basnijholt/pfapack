@@ -79,10 +79,12 @@ ignore_errors = true
 [tool.pytest.ini_options]
 addopts = """
     --durations=5
+    --cov
     --cov=pfapack
     --cov-append
     --cov-fail-under=30
     --cov-report=term-missing
+    --cov-report=xml
     --import-mode=importlib
 """
 norecursedirs = ["docs"]
