@@ -8,7 +8,6 @@
 from __future__ import annotations
 
 import ctypes
-import sys
 import os
 from pathlib import Path
 from typing import Final
@@ -24,57 +23,65 @@ from pfapack.exceptions import (
 
 
 def _find_library() -> ctypes.CDLL:
-    """Find and load the PFAPACK C library.
-
-    Returns
-    -------
-    ctypes.CDLL
-        The loaded library.
-
-    Raises
-    ------
-    OSError
-        If the library cannot be found or loaded.
-    """
+    """Find and load the PFAPACK C library."""
     _folder: Final = Path(__file__).parent
     _build_folder: Final = _folder.parent / "build"
 
-    if sys.platform == "darwin":
-        lib_name = "libcpfapack.dylib"
-    elif sys.platform == "win32":
-        lib_name = "libcpfapack.dll"
-    else:
-        lib_name = "libcpfapack.so"
+    # On Windows, ensure OpenBLAS and its dependencies can be found
+    if os.name == "nt":
+        # Common locations for OpenBLAS on Windows
+        possible_blas_paths = [
+            Path("C:/msys64/mingw64/bin"),  # MSYS2 MinGW64
+            Path("C:/msys64/ucrt64/bin"),  # MSYS2 UCRT64
+            Path("C:/msys64/clang64/bin"),  # MSYS2 Clang64
+            Path(os.environ.get("OPENBLAS_PATH", "")).parent
+            / "bin",  # Custom installation
+            Path(os.environ.get("CONDA_PREFIX", "")) / "Library" / "bin",  # Conda
+        ]
+
+        # Try to find and load OpenBLAS from any of these locations
+        blas_loaded = False
+        for path in possible_blas_paths:
+            if path.exists():
+                try:
+                    os.add_dll_directory(str(path))  # type: ignore[attr-defined]
+                    openblas_path = path / "libopenblas.dll"
+                    if openblas_path.exists():
+                        ctypes.CDLL(str(openblas_path))
+                        blas_loaded = True
+                        break
+                except OSError as e:
+                    print(f"Warning: Failed to load OpenBLAS from {path}: {e}")
+
+        if not blas_loaded:
+            print("Warning: Could not load OpenBLAS from any known location")
+
+    # Try all possible library names
+    lib_names = [
+        "cpfapack.dll",
+        "libcpfapack.dll",
+        "libcpfapack.so",
+        "libcpfapack.dylib",
+    ]
 
     # List of all possible paths
-    possible_paths = [_folder / lib_name]  # Regular install
+    possible_paths = []
+    for lib_name in lib_names:
+        possible_paths.append(_folder / lib_name)
+        # Add build directories for editable install
+        if _build_folder.exists():
+            for p in _build_folder.glob("*"):
+                if p.is_dir():
+                    possible_paths.append(p / lib_name)
 
-    # Add build directories for editable install
-    if _build_folder.exists():
-        for p in _build_folder.glob("*"):
-            if p.is_dir():
-                possible_paths.append(p / lib_name)
-
-    if sys.platform == "win32":
-        # Add all paths to DLL search path
-        for path in possible_paths:
-            if path.parent.exists():
-                try:
-                    os.add_dll_directory(str(path.parent))
-                except OSError:
-                    pass  # Ignore if directory can't be added
-
-        # Try loading just by filename first (Windows-specific behavior)
-        try:
-            return ctypes.CDLL(lib_name)
-        except OSError:
-            pass
-
-    # Try all possible full paths
+    # Try all possible paths
     errors = []
     for path in possible_paths:
         try:
-            return ctypes.CDLL(str(path))
+            if path.exists():
+                return ctypes.CDLL(str(path))
+            else:
+                errors.append(f"{path}: File does not exist")
         except OSError as e:
             errors.append(f"{path}: {e}")
             continue
@@ -84,10 +91,10 @@ def _find_library() -> ctypes.CDLL:
         [
             "Could not load PFAPACK library.",
             "Attempted paths:",
-            *[f"  {e}" for e in errors],
+            *[f" {e}" for e in errors],
             f"Current directory: {os.getcwd()}",
             f"Package directory: {_folder}",
-            f"Python path: {sys.path}",
+            f"Files in package directory: {list(_folder.glob('*'))}",
         ]
     )
     raise OSError(error_msg)

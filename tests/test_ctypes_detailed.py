@@ -15,7 +15,7 @@ except OSError:
     with_ctypes = False
 
 
-# @pytest.mark.skipif(not with_ctypes, reason="the libs might not be installed")
+@pytest.mark.skipif(not with_ctypes, reason="the libs might not be installed")
 def test_ctypes_real_different_sizes():
     """Test real matrices of different sizes."""
     for n in [2, 4, 8, 16, 32]:

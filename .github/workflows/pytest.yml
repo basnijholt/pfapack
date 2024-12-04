@@ -62,11 +62,11 @@ jobs:
 
     - name: Install test dependencies
       run: |
-        pip install ".[test]"
+        pip install -e ".[test]"
 
     - name: Run Python tests
       run: |
-        pytest tests --cov --cov-append --cov-report=term-missing
+        pytest tests
 
     - name: Upload coverage to Codecov
       if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.13'

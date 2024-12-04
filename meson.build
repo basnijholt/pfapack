@@ -9,63 +9,60 @@ project('pfapack',
   version: run_command('pfapack/_version.py', check: true).stdout().strip(),
 )
 
-# Get compilers
+# === Compilers and basic dependencies ===
 c_compiler = meson.get_compiler('c')
 fortran_compiler = meson.get_compiler('fortran')
-
-# Dependencies
 thread_dep = dependency('threads')
 m_dep = c_compiler.find_library('m', required: false)  # math library
 
+# === Python setup ===
+py = import('python').find_installation(pure: false)
+
+# === Platform specific BLAS/LAPACK setup ===
 if host_machine.system() == 'darwin'
+  # Use Apple's Accelerate framework
   add_project_link_arguments('-framework', 'Accelerate', language: ['c', 'fortran'])
   lapack_dep = declare_dependency()
   blas_dep = declare_dependency()
+
 elif host_machine.system() == 'windows'
   # On Windows, find OpenBLAS which includes LAPACK
   openblas_lib = dependency('openblas', required: false)
   if not openblas_lib.found()
     # Fallback to manual detection
-    compiler = meson.get_compiler('c')
-    openblas_lib = compiler.find_library('libopenblas',
+    openblas_lib = c_compiler.find_library('libopenblas',
       dirs: ['C:/msys64/mingw64/lib'],
       required: true)
   endif
   # OpenBLAS includes both BLAS and LAPACK
   lapack_dep = declare_dependency(dependencies: [openblas_lib])
   blas_dep = declare_dependency(dependencies: [openblas_lib])
+else # Linux
+  # Try multiple methods to find OpenBLAS
+  openblas_dep = dependency('openblas', required: false)
+  if not openblas_dep.found()
+      # Fallback to manual detection
+      openblas_dep = c_compiler.find_library('openblas', required: false)
+  endif
 
-else
+  if openblas_dep.found()
+      # OpenBLAS includes both BLAS and LAPACK
+      blas_dep = declare_dependency(dependencies: [openblas_dep])
+      lapack_dep = declare_dependency(dependencies: [openblas_dep])
+  else
+      # Fall back to separate BLAS and LAPACK
+      blas_dep = c_compiler.find_library('blas', required: true)
+      lapack_dep = c_compiler.find_library('lapack', required: true)
+  endif
+
   # Add rt library for clock_gettime
   rt_dep = c_compiler.find_library('rt', required: false)
   if rt_dep.found()
     add_project_link_arguments('-lrt', language: ['c', 'fortran'])
   endif
-
-    # Add rt library for clock_gettime
-    rt_dep = c_compiler.find_library('rt', required: false)
-    if rt_dep.found()
-        add_project_link_arguments('-lrt', language: ['c', 'fortran'])
-    endif
-
-    # Try multiple methods to find OpenBLAS
-    openblas_dep = dependency('openblas', required: false)
-    if not openblas_dep.found()
-        # Fallback to manual detection
-        openblas_dep = c_compiler.find_library('openblas', required: false)
-    endif
-
-    if openblas_dep.found()
-        # OpenBLAS includes both BLAS and LAPACK
-        blas_dep = declare_dependency(dependencies: [openblas_dep])
-        lapack_dep = declare_dependency(dependencies: [openblas_dep])
-    else
-        # Fall back to separate BLAS and LAPACK
-        blas_dep = c_compiler.find_library('blas', required: true)
-        lapack_dep = c_compiler.find_library('lapack', required: true)
-    endif
 endif
 
+# === Source files ===
 pfapack_dir = 'original_source'
 
 # Fortran sources in correct order matching the Makefile.FORTRAN
@@ -159,15 +156,13 @@ c_sources = files(
   join_paths(pfapack_dir, 'c_interface', 'skbtrd.c'),
 )
 
-# Import Python module
-py = import('python').find_installation(pure: false)
-
+# === Build libraries ===
 # Build Fortran library
 libpfapack = shared_library('pfapack',
   fortran_sources,
   dependencies: [lapack_dep, blas_dep, thread_dep, m_dep],
   install: true,
-  install_dir: py.get_install_dir() / 'pfapack',  # Install in package directory
+  install_dir: py.get_install_dir() / 'pfapack',
 )
 
 # Include directories
@@ -183,22 +178,25 @@ libcpfapack = shared_library('cpfapack',
   link_with: libpfapack,
   dependencies: [lapack_dep, blas_dep, thread_dep, m_dep],
   install: true,
-  install_dir: py.get_install_dir() / 'pfapack',  # Install in package directory
+  install_dir: py.get_install_dir() / 'pfapack',
 )
 
-# Python module
+# === Python module installation ===
+py_sources = [
+  'pfapack/__init__.py',
+  'pfapack/_version.py',
+  'pfapack/ctypes.py',
+  'pfapack/exceptions.py',
+  'pfapack/pfaffian.py',
+]
+
 py.install_sources(
-  ['pfapack/__init__.py',
-   'pfapack/_version.py',
-   'pfapack/ctypes.py',
-   'pfapack/exceptions.py',
-   'pfapack/pfaffian.py'],
+  py_sources,
   pure: false,
   subdir: 'pfapack'
 )
 
-
-# Build test executables
+# === Tests ===
 if get_option('build_tests').allowed()
   # C interface tests
   c_test_sources = files(
