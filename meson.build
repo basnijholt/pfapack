@@ -190,11 +190,6 @@ py_sources = [
   'pfapack/pfaffian.py',
 ]
 
-# Add OpenBLAS DLL only on Windows
-if host_machine.system() == 'windows'
-  py_sources += ['pfapack/libopenblas.dll']
-endif
-
 py.install_sources(
   py_sources,
   pure: false,
