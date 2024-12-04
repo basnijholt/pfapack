@@ -26,13 +26,17 @@ if host_machine.system() == 'darwin'
   blas_dep = declare_dependency()
 
 elif host_machine.system() == 'windows'
-  openblas_lib = c_compiler.find_library('openblas',
-      dirs: ['/mingw64/lib'],
-      required: true
-  )
+  # On Windows, find OpenBLAS which includes LAPACK
+  openblas_lib = dependency('openblas', required: false)
+  if not openblas_lib.found()
+    # Fallback to manual detection
+    openblas_lib = c_compiler.find_library('libopenblas',
+      dirs: ['C:/msys64/mingw64/lib'],
+      required: true)
+  endif
+  # OpenBLAS includes both BLAS and LAPACK
   lapack_dep = declare_dependency(dependencies: [openblas_lib])
   blas_dep = declare_dependency(dependencies: [openblas_lib])
-
 else # Linux
   # Try multiple methods to find OpenBLAS
   openblas_dep = dependency('openblas', required: false)
@@ -179,22 +183,22 @@ libcpfapack = shared_library('cpfapack',
 
 # === Python module installation ===
 py_sources = [
-    'pfapack/__init__.py',
-    'pfapack/_version.py',
-    'pfapack/ctypes.py',
-    'pfapack/exceptions.py',
-    'pfapack/pfaffian.py',
+  'pfapack/__init__.py',
+  'pfapack/_version.py',
+  'pfapack/ctypes.py',
+  'pfapack/exceptions.py',
+  'pfapack/pfaffian.py',
 ]
 
 # Add OpenBLAS DLL only on Windows
 if host_machine.system() == 'windows'
-    py_sources += ['pfapack/libopenblas.dll']
+  py_sources += ['pfapack/libopenblas.dll']
 endif
 
 py.install_sources(
-    py_sources,
-    pure: false,
-    subdir: 'pfapack'
+  py_sources,
+  pure: false,
+  subdir: 'pfapack'
 )
 
 # === Tests ===
