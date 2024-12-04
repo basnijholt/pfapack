@@ -19,6 +19,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - uses: fortran-lang/setup-fortran@v1
+        id: setup-fortran
+        with:
+          version: 12 # should be available on all runners
+
       - name: Install system dependencies (Windows)
         if: runner.os == 'Windows'
         uses: msys2/setup-msys2@v2
