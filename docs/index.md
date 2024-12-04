@@ -10,6 +10,7 @@ hide-toc: true
 :maxdepth: 2
 :caption: Contents:
 
+self
 CHANGELOG
 reference/pfapack
 ```
