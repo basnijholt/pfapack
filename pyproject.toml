@@ -1,6 +1,6 @@
 [build-system]
 build-backend = "mesonpy"
-requires = ["meson-python", "versioningit"]
+requires = ["meson-python", "setuptools_scm"]
 
 [project]
 name = "pfapack"
@@ -43,29 +43,6 @@ documentation = "https://pfapack.readthedocs.io"
 [project.readme]
 content-type = "text/markdown"
 file = "README.md"
-
-[tool.hatch.version]
-source = "versioningit"
-
-[tool.hatch.build.targets.wheel]
-packages = ["pfapack"]
-
-[tool.hatch.build.hooks.versioningit-onbuild]
-build-file = "pfapack/_version.py"
-source-file = "pfapack/_version.py"
-
-[tool.versioningit]
-default-version = "0.0.0"
-
-[tool.versioningit.vcs]
-method = "git"
-match = ["v*"]
-default-tag = "0.0.0"
-
-[tool.versioningit.format]
-dirty = "{version}.dev{distance}+{branch}.{vcs}{rev}.dirty"
-distance = "{version}.dev{distance}+{branch}.{vcs}{rev}"
-distance-dirty = "{version}.dev{distance}+{branch}.{vcs}{rev}.dirty"
 
 [tool.mypy]
 python_version = "3.10"
