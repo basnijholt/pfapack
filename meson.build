@@ -9,10 +9,6 @@ project('pfapack',
   version: run_command('pfapack/_version.py', check: true).stdout().strip(),
 )
 
-# NOTE(Bas): I couldn't get shared libraries to work on Windows, so I'm
-# disabling them for now.
-static_build = get_option('static') or host_machine.system() == 'windows'
-
 # Get compilers
 c_compiler = meson.get_compiler('c')
 fortran_compiler = meson.get_compiler('fortran')
@@ -29,32 +25,18 @@ if host_machine.system() == 'darwin'  # macOS
   lapack_dep = declare_dependency()
   blas_dep = declare_dependency()
 elif host_machine.system() == 'windows'
-  # On Windows with static build, we need OpenBLAS
-  # First try pkg-config
-  openblas_dep = dependency('openblas', required: false)
-
-  if not openblas_dep.found()
-    # Try to find the DLL/import library
-    openblas_lib = c_compiler.find_library('openblas',
+  # On Windows, find OpenBLAS which includes LAPACK
+  openblas_lib = dependency('openblas', required: false)
+  if not openblas_lib.found()
+    # Fallback to manual detection
+    compiler = meson.get_compiler('c')
+    openblas_lib = compiler.find_library('libopenblas',
       dirs: ['C:/msys64/mingw64/lib'],
-      required: true
-    )
-    openblas_dep = declare_dependency(
-      dependencies: [openblas_lib],
-      include_directories: include_directories('C:/msys64/mingw64/include')
-    )
+      required: true)
   endif
-
   # OpenBLAS includes both BLAS and LAPACK
-  lapack_dep = openblas_dep
-  blas_dep = openblas_dep
-
-  # Copy OpenBLAS DLL to the package directory
-  if static_build
-    install_data('C:/msys64/mingw64/bin/libopenblas.dll',
-      install_dir: py.get_install_dir() / 'pfapack'
-    )
-  endif
+  lapack_dep = declare_dependency(dependencies: [openblas_lib])
+  blas_dep = declare_dependency(dependencies: [openblas_lib])
 else  # Linux
   # Add rt library for clock_gettime
   rt_dep = c_compiler.find_library('rt', required: false)
@@ -184,41 +166,23 @@ c_include_dir = include_directories(
   join_paths(pfapack_dir, 'c_interface', 'TESTING'),
 )
 
-# Platform-specific library type
-if static_build
-  # Build Fortran library as static
-  libpfapack = static_library('pfapack',
-    fortran_sources,
-    dependencies: [lapack_dep, blas_dep, thread_dep, m_dep],
-    install: false,
-  )
-  # Build C library as static
-  libcpfapack = static_library('cpfapack',
-    c_sources,
-    include_directories: c_include_dir,
-    link_with: libpfapack,
-    dependencies: [lapack_dep, blas_dep, thread_dep, m_dep],
-    install: true,
-    install_dir: py.get_install_dir() / 'pfapack',
-  )
-else
-  # Build Fortran library as shared
-  libpfapack = shared_library('pfapack',
-    fortran_sources,
-    dependencies: [lapack_dep, blas_dep, thread_dep, m_dep],
-    install: true,
-    install_dir: py.get_install_dir() / 'pfapack',
-  )
-  # Build C library as shared
-  libcpfapack = shared_library('cpfapack',
-    c_sources,
-    include_directories: c_include_dir,
-    link_with: libpfapack,
-    dependencies: [lapack_dep, blas_dep, thread_dep, m_dep],
-    install: true,
-    install_dir: py.get_install_dir() / 'pfapack',
-  )
-endif
+# Build Fortran library as shared
+libpfapack = shared_library('pfapack',
+  fortran_sources,
+  dependencies: [lapack_dep, blas_dep, thread_dep, m_dep],
+  install: true,
+  install_dir: py.get_install_dir() / 'pfapack',
+)
+
+# Build C library as shared
+libcpfapack = shared_library('cpfapack',
+  c_sources,
+  include_directories: c_include_dir,
+  link_with: libpfapack,
+  dependencies: [lapack_dep, blas_dep, thread_dep, m_dep],
+  install: true,
+  install_dir: py.get_install_dir() / 'pfapack',
+)
 
 # Python module
 py.install_sources(
