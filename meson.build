@@ -24,7 +24,7 @@ py = import('python').find_installation(pure: false)
 thread_dep = dependency('threads')
 m_dep = c_compiler.find_library('m', required: false)  # math library
 
-if host_machine.system() == 'darwin'
+if host_machine.system() == 'darwin'  # macOS
   add_project_link_arguments('-framework', 'Accelerate', language: ['c', 'fortran'])
   lapack_dep = declare_dependency()
   blas_dep = declare_dependency()
@@ -55,7 +55,7 @@ elif host_machine.system() == 'windows'
       install_dir: py.get_install_dir() / 'pfapack'
     )
   endif
-else
+else  # Linux
   # Add rt library for clock_gettime
   rt_dep = c_compiler.find_library('rt', required: false)
   if rt_dep.found()
