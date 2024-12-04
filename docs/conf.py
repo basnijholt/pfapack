@@ -15,8 +15,13 @@
 # sys.path.insert(0, os.path.abspath('.'))
 
 import os
+from pathlib import Path
 
 import pfapack
+
+package_path = Path("..").resolve()
+docs_path = Path().resolve()
+
 
 # -- Project information -----------------------------------------------------
 
@@ -39,7 +44,7 @@ extensions = [
     "sphinx.ext.viewcode",  # View source code from documentation pages
     "sphinx.ext.napoleon",  # numpy-style docstrings
     "sphinxcontrib.apidoc",  # Run sphinx-apidoc when building
-    "m2r",
+    "myst_parser",
 ]
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ["_templates"]
@@ -80,3 +85,73 @@ html_static_path = ["_static"]
 # The license file has no extension, so Sphinx ignores it by default, so we
 # must add it here
 html_extra_path = ["LICENSE"]
+
+
+def _change_alerts_to_admonitions(input_text: str) -> str:
+    # Splitting the text into lines
+    lines = input_text.split("\n")
+
+    # Placeholder for the edited text
+    edited_text = []
+
+    # Mapping of markdown markers to their new format
+    mapping = {
+        "IMPORTANT": "important",
+        "NOTE": "note",
+        "TIP": "tip",
+        "WARNING": "caution",
+    }
+
+    # Variable to keep track of the current block type
+    current_block_type = None
+
+    for line in lines:
+        # Check if the line starts with any of the markers
+        if any(line.strip().startswith(f"> [!{marker}]") for marker in mapping):
+            # Find the marker and set the current block type
+            current_block_type = next(
+                marker for marker in mapping if f"> [!{marker}]" in line
+            )
+            # Start of a new block
+            edited_text.append("```{" + mapping[current_block_type] + "}")
+        elif current_block_type and line.strip() == ">":
+            # Empty line within the block, skip it
+            continue
+        elif current_block_type and not line.strip().startswith(">"):
+            # End of the current block
+            edited_text.append("```")
+            edited_text.append(line)  # Add the current line as it is
+            current_block_type = None  # Reset the block type
+        elif current_block_type:
+            # Inside the block, so remove '>' and add the line
+            edited_text.append(line.lstrip("> ").rstrip())
+        else:
+            # Outside any block, add the line as it is
+            edited_text.append(line)
+
+    # Join the edited lines back into a single string
+    return "\n".join(edited_text)
+
+
+def change_alerts_to_admonitions(input_file: Path, output_file: Path) -> None:
+    """Change markdown alerts to admonitions.
+
+    For example, changes
+    > [!NOTE]
+    > This is a note.
+    to
+    ```{note}
+    This is a note.
+    ```
+    """
+    with input_file.open("r") as infile:
+        content = infile.read()
+    new_content = _change_alerts_to_admonitions(content)
+
+    with output_file.open("w") as outfile:
+        outfile.write(new_content)
+
+
+readme_path = package_path / "README.md"
+docs_readme_path = docs_path / "README.md"
+change_alerts_to_admonitions(readme_path, docs_readme_path)
