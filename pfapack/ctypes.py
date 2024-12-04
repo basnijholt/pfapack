@@ -40,9 +40,9 @@ def _find_library() -> ctypes.CDLL:
     _build_folder: Final = _folder.parent / "build"
 
     if sys.platform == "darwin":
-        lib_name = "libcpfapack.a"
+        lib_name = "libcpfapack.dylib"
     elif sys.platform == "win32":
-        lib_name = "libcpfapack.dll"
+        lib_name = "cpfapack.dll"  # Changed from libcpfapack.dll
     else:
         lib_name = "libcpfapack.so"
 
@@ -56,21 +56,13 @@ def _find_library() -> ctypes.CDLL:
                 possible_paths.append(p / lib_name)
 
     if sys.platform == "win32":
-        # Add all paths to DLL search path
-        for path in possible_paths:
-            if path.parent.exists():
-                try:
-                    os.add_dll_directory(str(path.parent))
-                except OSError:
-                    pass  # Ignore if directory can't be added
-
         # Try loading just by filename first (Windows-specific behavior)
         try:
             return ctypes.CDLL(lib_name)
         except OSError:
             pass
 
-    # Try all possible full paths
+    # Try all possible paths
     errors = []
     for path in possible_paths:
         try:
