@@ -29,6 +29,7 @@ elif host_machine.system() == 'windows'
     compiler = meson.get_compiler('c')
     openblas_lib = compiler.find_library('libopenblas',
       dirs: ['C:/msys64/mingw64/lib'],
+      static: true,
       required: true)
   endif
   # OpenBLAS includes both BLAS and LAPACK
@@ -163,7 +164,7 @@ c_sources = files(
 py = import('python').find_installation(pure: false)
 
 # Build Fortran library
-libpfapack = shared_library('pfapack',
+libpfapack = static_library('pfapack',
   fortran_sources,
   dependencies: [lapack_dep, blas_dep, thread_dep, m_dep],
   install: true,
@@ -177,7 +178,7 @@ c_include_dir = include_directories(
 )
 
 # Build C library
-libcpfapack = shared_library('cpfapack',
+libcpfapack = static_library('cpfapack',
   c_sources,
   include_directories: c_include_dir,
   link_with: libpfapack,
