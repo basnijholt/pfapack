@@ -94,3 +94,12 @@ source = ["pfapack"]
 [tool.coverage.report]
 show_missing = true
 precision = 2
+
+[tool.cibuildwheel]
+before-build = "pip install meson-python"
+test-extras = ["test"]
+test-command = "pytest"
+skip = "pp*"  # Skip PyPy wheels for now
+
+[tool.cibuildwheel.linux]
+before-all = "yum install -y epel-release && yum install -y openblas-devel"
