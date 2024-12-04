@@ -178,7 +178,6 @@ c_sources = files(
 # Import Python module
 py = import('python').find_installation(pure: false)
 
-
 # Include directories
 c_include_dir = include_directories(
   join_paths(pfapack_dir, 'c_interface'),
