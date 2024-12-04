@@ -103,7 +103,8 @@ skip = [
     "pp*",              # Skip PyPy wheels
     "*-win32",          # Skip 32-bit Windows
     "*-manylinux_i686", # Skip 32-bit manylinux
-    "*-musllinux_i686", # Skip 32-bit musllinux
+    "*-musllinux*",     # Skip any musllinux wheels (couldn't get OpenBLAS to install)
+
 ]
 
 [tool.cibuildwheel.linux]
