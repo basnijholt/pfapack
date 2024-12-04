@@ -57,7 +57,6 @@ addopts = """
     --durations=5
     --cov
     --cov=pfapack
-    --cov-append
     --cov-fail-under=30
     --cov-report=term-missing
     --cov-report=xml
