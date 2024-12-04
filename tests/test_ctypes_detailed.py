@@ -2,6 +2,9 @@ import numpy as np
 import numpy.matlib
 import pytest
 
+from pfapack.ctypes import pfaffian as cpf
+from pfapack.exceptions import InvalidDimensionError, InvalidParameterError
+
 try:
     from pfapack.ctypes import pfaffian as cpf
 
@@ -10,7 +13,7 @@ except OSError:
     with_ctypes = False
 
 
-@pytest.mark.skipif(not with_ctypes, reason="the libs might not be installed")
+# @pytest.mark.skipif(not with_ctypes, reason="the libs might not be installed")
 def test_ctypes_real_different_sizes():
     """Test real matrices of different sizes."""
     for n in [2, 4, 8, 16, 32]:
@@ -73,26 +76,32 @@ def test_ctypes_uplo():
     np.testing.assert_almost_equal(pf_upper / pf_lower, 1, decimal=10)
 
 
+def make_skew_matrix(n: int, complex: bool = False) -> np.ndarray:
+    """Create a random skew-symmetric matrix."""
+    A = np.random.rand(n, n)
+    if complex:
+        A = A + 1j * np.random.rand(n, n)
+    return A - A.T
+
+
 @pytest.mark.skipif(not with_ctypes, reason="the libs might not be installed")
 def test_ctypes_errors():
     """Test error conditions."""
     # Test non-square matrix
-    A = numpy.matlib.rand(3, 4)
-    with pytest.raises(AssertionError):
+    A = np.random.rand(3, 4)
+    with pytest.raises(InvalidDimensionError, match="must be square"):
         cpf(A)
 
     # Test odd-dimensional matrix
-    A = numpy.matlib.rand(3, 3)
-    A = A - A.T
-    with pytest.raises(AssertionError):
+    A = make_skew_matrix(3)
+    with pytest.raises(InvalidDimensionError, match="must be even"):
         cpf(A)
 
     # Test invalid uplo parameter
-    A = numpy.matlib.rand(4, 4)
-    A = A - A.T
-    with pytest.raises(AssertionError):
+    A = make_skew_matrix(4)
+    with pytest.raises(InvalidParameterError, match="'uplo' must be"):
         cpf(A, uplo="X")
 
     # Test invalid method parameter
-    with pytest.raises(AssertionError):
+    with pytest.raises(InvalidParameterError, match="'method' must be"):
         cpf(A, method="X")

@@ -6,11 +6,64 @@
 # skbpfa.o skbpf10.o sktrf.o sktrd.o skbtrd.o
 
 import ctypes
+import sys
+from pathlib import Path
+from typing import Final
 
 import numpy as np
 from numpy.ctypeslib import ndpointer
 
-lib = ctypes.CDLL("libcpfapack.so")
+from pfapack.exceptions import (
+    ComputationError,
+    InvalidDimensionError,
+    InvalidParameterError,
+)
+
+
+def _find_library() -> ctypes.CDLL:
+    """Find and load the PFAPACK C library.
+
+    Returns
+    -------
+    ctypes.CDLL
+        The loaded library.
+
+    Raises
+    ------
+    OSError
+        If the library cannot be found or loaded.
+    """
+    _folder: Final = Path(__file__).parent
+    _build_folder: Final = _folder.parent / "build"
+
+    if sys.platform == "darwin":
+        lib_name = "libcpfapack.dylib"
+    else:
+        lib_name = "libcpfapack.so"
+
+    # Try multiple locations for the library
+    possible_paths = [
+        _folder / lib_name,  # Regular install
+    ]
+
+    # Add build directories for editable install
+    if _build_folder.exists():
+        for p in _build_folder.glob("*"):
+            if p.is_dir():
+                possible_paths.append(p / lib_name)
+
+    for path in possible_paths:
+        try:
+            return ctypes.CDLL(str(path))
+        except OSError:
+            continue
+
+    raise OSError(
+        f"Could not find {lib_name} in any of: {[str(p) for p in possible_paths]}"
+    )
+
+
+lib = _find_library()
 
 
 def _init(which):
@@ -49,7 +102,7 @@ def pfaffian(
     uplo: str = "U",
     method: str = "P",
     avoid_overflow: bool = False,
-):
+) -> float | complex:
     """Compute Pfaffian.
 
     Parameters
@@ -63,35 +116,77 @@ def pfaffian(
     avoid_overflow : bool
         If True, take special care to avoid numerical under- or
         overflow (at the cost of possible additional round-off errors).
+
+    Returns
+    -------
+    float | complex
+        The Pfaffian of the matrix.
+
+    Raises
+    ------
+    InvalidDimensionError
+        If the matrix is not square or has odd dimensions.
+    InvalidParameterError
+        If uplo or method parameters are invalid.
+    ComputationError
+        If the computation fails.
     """
-    uplo: bytes = uplo.encode()  # type: ignore[no-redef]
-    method: bytes = method.encode()  # type: ignore[no-redef]
-    assert np.ndim(matrix) == 2 and np.shape(matrix)[0] == np.shape(matrix)[1]
+    if uplo not in ("U", "L"):
+        raise InvalidParameterError(f"'uplo' must be 'U' or 'L', got {uplo!r}")
+    if method not in ("P", "H"):
+        raise InvalidParameterError(f"'method' must be 'P' or 'H', got {method!r}")
+
+    uplo_bytes = uplo.encode()
+    method_bytes = method.encode()
+
+    # Check matrix is square
+    if np.ndim(matrix) != 2 or np.shape(matrix)[0] != np.shape(matrix)[1]:
+        raise InvalidDimensionError(
+            f"Matrix must be square, got shape {np.shape(matrix)}"
+        )
+
+    # Check matrix has even dimensions
+    n = np.shape(matrix)[0]
+    if n % 2 != 0:
+        raise InvalidDimensionError(f"Matrix dimension must be even, got {n}")
+
     if np.iscomplex(matrix).any():
         a = np.zeros((2,) + np.shape(matrix), dtype=np.float64, order="F")
         a[0] = np.real(matrix)
         a[1] = np.imag(matrix)
         if avoid_overflow:
-            pfaffian = (ctypes.c_double * 4)(0.0, 0.0)
-            success = skpf10_z(matrix.shape[0], a, pfaffian, uplo, method)
-            x = pfaffian[0] + 1j * pfaffian[1]
-            exp = pfaffian[2] + 1j * pfaffian[3]
-            pfaffian = from_exp(x, exp)
-        else:
-            pfaffian = (ctypes.c_double * 2)(0.0, 0.0)
-            success = skpfa_z(matrix.shape[0], a, pfaffian, uplo, method)
-            pfaffian = pfaffian[0] + 1j * pfaffian[1]  # type: ignore[assignment]
-    else:
-        matrix = np.asarray(matrix, dtype=np.float64, order="F")
-        if avoid_overflow:
-            pfaffian = (ctypes.c_double * 2)(0.0, 0.0)
-            success = skpf10_d(matrix.shape[0], matrix, pfaffian, uplo, method)
-            pfaffian = from_exp(pfaffian[0], pfaffian[1])  # type: ignore[assignment]
-        else:
-            pfaffian = ctypes.c_double(0.0)  # type: ignore[assignment]
-            success = skpfa_d(
-                matrix.shape[0], matrix, ctypes.byref(pfaffian), uplo, method
+            result_array = (ctypes.c_double * 4)(0.0, 0.0)
+            success = skpf10_z(
+                matrix.shape[0], a, result_array, uplo_bytes, method_bytes
             )
-            pfaffian = pfaffian.value  # type: ignore[misc]
-    assert success == 0
-    return pfaffian
+            x = result_array[0] + 1j * result_array[1]
+            exp = result_array[2] + 1j * result_array[3]
+            result = from_exp(x, exp)
+        else:
+            result_array = (ctypes.c_double * 2)(0.0, 0.0)
+            success = skpfa_z(
+                matrix.shape[0], a, result_array, uplo_bytes, method_bytes
+            )
+            result = result_array[0] + 1j * result_array[1]
+    else:
+        matrix_f = np.asarray(matrix, dtype=np.float64, order="F")
+        if avoid_overflow:
+            result_array = (ctypes.c_double * 2)(0.0, 0.0)
+            success = skpf10_d(
+                matrix.shape[0], matrix_f, result_array, uplo_bytes, method_bytes
+            )
+            result = from_exp(result_array[0], result_array[1])
+        else:
+            result_double = ctypes.c_double(0.0)
+            success = skpfa_d(
+                matrix.shape[0],
+                matrix_f,
+                ctypes.byref(result_double),
+                uplo_bytes,
+                method_bytes,
+            )
+            result = result_double.value
+
+    if success != 0:
+        raise ComputationError(f"PFAPACK returned error code {success}")
+    return result

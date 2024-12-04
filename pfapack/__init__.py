@@ -1,4 +1,5 @@
-# pfapack Python package
+"""PFAPACK: Efficient numerical computation of the Pfaffian."""
+
 import os
 import sys
 from pathlib import Path
