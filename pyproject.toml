@@ -94,3 +94,21 @@ source = ["pfapack"]
 [tool.coverage.report]
 show_missing = true
 precision = 2
+
+[tool.cibuildwheel]
+before-build = "pip install meson-python"
+test-extras = ["test"]
+test-command = "pytest {package}/tests"
+skip = [
+    "pp*",          # Skip PyPy wheels
+    "*-win32",      # Skip 32-bit Windows
+    "*_i686",       # Skip 32-bit manylinux
+    "*_s390x",      # Skip s390x manylinux
+    "*-musllinux*", # Skip any musllinux wheels (couldn't get OpenBLAS to install)
+    "cp36-*",       # Skip Python 3.6
+    "cp37-*",       # Skip Python 3.7
+    "cp38-*",       # Skip Python 3.8
+]
+
+[tool.cibuildwheel.linux]
+before-all = "yum install -y openblas-devel"
