@@ -5,7 +5,7 @@ requires = ["meson-python", "setuptools_scm"]
 [project]
 name = "pfapack"
 description = "Efficient numerical computation of the Pfaffian for dense and banded skew-symmetric matrices."
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 dynamic = ["version"]
 authors = [
     # Packing author
@@ -19,7 +19,6 @@ classifiers = [
     "Operating System :: OS Independent",
     "Programming Language :: Python",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
@@ -88,6 +87,7 @@ skip = [
     "cp36-*",       # Skip Python 3.6
     "cp37-*",       # Skip Python 3.7
     "cp38-*",       # Skip Python 3.8
+    "cp39-*",       # Skip Python 3.9
 ]
 
 [tool.cibuildwheel.linux]
