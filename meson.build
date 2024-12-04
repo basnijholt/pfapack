@@ -151,12 +151,6 @@ c_sources = files(
   join_paths(pfapack_dir, 'c_interface', 'skbtrd.c'),
 )
 
-# Include directories
-c_include_dir = include_directories(
-  join_paths(pfapack_dir, 'c_interface'),
-  join_paths(pfapack_dir, 'c_interface', 'TESTING'),
-)
-
 # Import Python module
 py = import('python').find_installation(pure: false)
 
@@ -166,6 +160,12 @@ libpfapack = shared_library('pfapack',
   dependencies: [lapack_dep, blas_dep, thread_dep, m_dep],
   install: true,
   install_dir: py.get_install_dir() / 'pfapack',
+)
+
+# Include directories
+c_include_dir = include_directories(
+  join_paths(pfapack_dir, 'c_interface'),
+  join_paths(pfapack_dir, 'c_interface', 'TESTING'),
 )
 
 # Build C library as shared
