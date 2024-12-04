@@ -3,7 +3,7 @@
 Code and algorithms are taken from [arXiv:1102.3440](https://arxiv.org/abs/1102.3440) which is authored by [Michael Wimmer](https://michaelwimmer.org/).
 
 [![license](https://img.shields.io/github/license/basnijholt/pfapack)](https://github.com/basnijholt/pfapack/blob/master/LICENSE)
-[![tests](https://github.com/basnijholt/pfapack/workflows/tests/badge.svg)](https://github.com/basnijholt/pfapack/actions?query=workflow%3Atests)
+[![pytest](https://github.com/basnijholt/pfapack/workflows/pytest/badge.svg)](https://github.com/basnijholt/pfapack/actions?query=workflow%3Atests)
 [![codecov](https://img.shields.io/codecov/c/github/basnijholt/pfapack)](https://codecov.io/gh/basnijholt/pfapack)
 [![docs](https://img.shields.io/readthedocs/pfapack)](https://pfapack.readthedocs.io)
 [![version](https://img.shields.io/pypi/v/pfapack)](https://pypi.org/project/pfapack/)
