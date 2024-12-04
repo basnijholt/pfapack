@@ -1,21 +1,17 @@
 #!/usr/bin/env python
-from __future__ import annotations
+try:
+    # setuptools_scm is not a runtime dependency. This is used when pip
+    # installing from a git repository.
+    from setuptools_scm import get_version
 
-from pathlib import Path
+    __version__ = get_version(root="..", relative_to=__file__)
+except (ImportError, LookupError):
+    from importlib.metadata import version, PackageNotFoundError
 
-# Is set during `onbuild` if `pip install pfapack` is used
-__version__ = ""
-
-if not __version__:
     try:
-        import versioningit
-    except ImportError:  # pragma: no cover
-        import importlib.metadata
-
-        __version__ = importlib.metadata.version("pfapack")
-    else:
-        PROJECT_DIR = Path(__file__).parent.parent
-        __version__ = versioningit.get_version(project_dir=PROJECT_DIR)
+        __version__ = version("pfapack")
+    except PackageNotFoundError:
+        __version__ = "0.0.0+unknown"
 
 
 if __name__ == "__main__":
