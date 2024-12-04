@@ -27,6 +27,17 @@ def _find_library() -> ctypes.CDLL:
     _folder: Final = Path(__file__).parent
     _build_folder: Final = _folder.parent / "build"
 
+    # On Windows, load OpenBLAS first
+    if os.name == "nt":
+        openblas_path = _folder / "libopenblas.dll"
+        if openblas_path.exists():
+            try:
+                ctypes.CDLL(str(openblas_path))
+            except OSError as e:
+                print(f"Warning: Failed to load OpenBLAS: {e}")
+        else:
+            print(f"Warning: OpenBLAS DLL not found at {openblas_path}")
+
     # Try all possible library names
     lib_names = [
         "cpfapack.dll",
