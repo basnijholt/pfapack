@@ -40,7 +40,7 @@ def _find_library() -> ctypes.CDLL:
     _build_folder: Final = _folder.parent / "build"
 
     if sys.platform == "darwin":
-        lib_name = "libcpfapack.dylib"
+        lib_name = "libcpfapack.a"
     elif sys.platform == "win32":
         lib_name = "libcpfapack.dll"
     else:

@@ -29,7 +29,6 @@ elif host_machine.system() == 'windows'
     compiler = meson.get_compiler('c')
     openblas_lib = compiler.find_library('libopenblas',
       dirs: ['C:/msys64/mingw64/lib'],
-      static: true,
       required: true)
   endif
   # OpenBLAS includes both BLAS and LAPACK
@@ -163,13 +162,6 @@ c_sources = files(
 # Import Python module
 py = import('python').find_installation(pure: false)
 
-# Build Fortran library
-libpfapack = static_library('pfapack',
-  fortran_sources,
-  dependencies: [lapack_dep, blas_dep, thread_dep, m_dep],
-  install: true,
-  install_dir: py.get_install_dir() / 'pfapack',  # Install in package directory
-)
 
 # Include directories
 c_include_dir = include_directories(
@@ -177,15 +169,43 @@ c_include_dir = include_directories(
   join_paths(pfapack_dir, 'c_interface', 'TESTING'),
 )
 
-# Build C library
-libcpfapack = static_library('cpfapack',
-  c_sources,
-  include_directories: c_include_dir,
-  link_with: libpfapack,
-  dependencies: [lapack_dep, blas_dep, thread_dep, m_dep],
-  install: true,
-  install_dir: py.get_install_dir() / 'pfapack',  # Install in package directory
-)
+# Platform-specific library type
+if host_machine.system() == 'windows'
+    # On Windows: static libraries
+    # Build Fortran library
+    libpfapack = static_library('pfapack',
+        fortran_sources,
+        dependencies: [lapack_dep, blas_dep, thread_dep, m_dep],
+        install: false,
+    )
+    # Build C library
+    libcpfapack = static_library('cpfapack',
+        c_sources,
+        include_directories: c_include_dir,
+        link_with: libpfapack,
+        dependencies: [lapack_dep, blas_dep, thread_dep, m_dep],
+        install: true,
+        install_dir: py.get_install_dir() / 'pfapack',
+    )
+else
+    # On macOS and Linux: shared libraries
+    # Build Fortran library
+    libpfapack = shared_library('pfapack',
+        fortran_sources,
+        dependencies: [lapack_dep, blas_dep, thread_dep, m_dep],
+        install: true,
+        install_dir: py.get_install_dir() / 'pfapack',
+    )
+    # Build C library
+    libcpfapack = shared_library('cpfapack',
+        c_sources,
+        include_directories: c_include_dir,
+        link_with: libpfapack,
+        dependencies: [lapack_dep, blas_dep, thread_dep, m_dep],
+        install: true,
+        install_dir: py.get_install_dir() / 'pfapack',
+    )
+endif
 
 # Python module
 py.install_sources(
