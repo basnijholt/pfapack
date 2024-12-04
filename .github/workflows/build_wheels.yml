@@ -21,6 +21,10 @@ jobs:
         with:
           submodules: recursive
 
+      - uses: actions/setup-python@v5
+        with:
+          python-version: 3.13
+
       - uses: fortran-lang/setup-fortran@v1
         id: setup-fortran
         with:
