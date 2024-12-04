@@ -38,7 +38,7 @@ elif host_machine.system() == 'windows'
     check: true
   ).stdout().strip()
 
-  openblas_lib = compiler.find_library('openblas',
+  openblas_lib = c_compiler.find_library('openblas',
     dirs: [numpy_dir],
     required: true
   )
@@ -57,7 +57,7 @@ else # Linux
       check: true
     ).stdout().strip()
 
-    openblas_lib = compiler.find_library('openblas',
+    openblas_lib = c_compiler.find_library('openblas',
       dirs: [numpy_dir],
       required: true
     )
