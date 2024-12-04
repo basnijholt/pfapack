@@ -42,17 +42,28 @@ else
     add_project_link_arguments('-lrt', language: ['c', 'fortran'])
   endif
 
-  # Try OpenBLAS first, fall back to separate BLAS/LAPACK if not found
-  openblas_dep = dependency('openblas', required: false)
-  if openblas_dep.found()
-    # OpenBLAS includes both BLAS and LAPACK
-    blas_dep = declare_dependency(dependencies: [openblas_dep])
-    lapack_dep = declare_dependency(dependencies: [openblas_dep])
-  else
-    # Fall back to separate BLAS and LAPACK
-    blas_dep = dependency('blas', required: true)
-    lapack_dep = dependency('lapack', required: true)
-  endif
+    # Add rt library for clock_gettime
+    rt_dep = c_compiler.find_library('rt', required: false)
+    if rt_dep.found()
+        add_project_link_arguments('-lrt', language: ['c', 'fortran'])
+    endif
+
+    # Try multiple methods to find OpenBLAS
+    openblas_dep = dependency('openblas', required: false)
+    if not openblas_dep.found()
+        # Fallback to manual detection
+        openblas_dep = c_compiler.find_library('openblas', required: false)
+    endif
+
+    if openblas_dep.found()
+        # OpenBLAS includes both BLAS and LAPACK
+        blas_dep = declare_dependency(dependencies: [openblas_dep])
+        lapack_dep = declare_dependency(dependencies: [openblas_dep])
+    else
+        # Fall back to separate BLAS and LAPACK
+        blas_dep = c_compiler.find_library('blas', required: true)
+        lapack_dep = c_compiler.find_library('lapack', required: true)
+    endif
 endif
 
 pfapack_dir = 'original_source'
