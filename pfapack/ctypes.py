@@ -29,15 +29,32 @@ def _find_library() -> ctypes.CDLL:
 
     # On Windows, ensure OpenBLAS and its dependencies can be found
     if os.name == "nt":
-        # Add MSYS2 bin directory to DLL search path
-        msys2_bin = Path("C:/msys64/mingw64/bin")
-        if msys2_bin.exists():
-            os.add_dll_directory(str(msys2_bin))  # type: ignore[attr-defined]
-            try:
-                # Load OpenBLAS directly from MSYS2
-                ctypes.CDLL(str(msys2_bin / "libopenblas.dll"))
-            except OSError as e:
-                print(f"Warning: Failed to load OpenBLAS: {e}")
+        # Common locations for OpenBLAS on Windows
+        possible_blas_paths = [
+            Path("C:/msys64/mingw64/bin"),  # MSYS2 MinGW64
+            Path("C:/msys64/ucrt64/bin"),  # MSYS2 UCRT64
+            Path("C:/msys64/clang64/bin"),  # MSYS2 Clang64
+            Path(os.environ.get("OPENBLAS_PATH", "")).parent
+            / "bin",  # Custom installation
+            Path(os.environ.get("CONDA_PREFIX", "")) / "Library" / "bin",  # Conda
+        ]
+
+        # Try to find and load OpenBLAS from any of these locations
+        blas_loaded = False
+        for path in possible_blas_paths:
+            if path.exists():
+                try:
+                    os.add_dll_directory(str(path))  # type: ignore[attr-defined]
+                    openblas_path = path / "libopenblas.dll"
+                    if openblas_path.exists():
+                        ctypes.CDLL(str(openblas_path))
+                        blas_loaded = True
+                        break
+                except OSError as e:
+                    print(f"Warning: Failed to load OpenBLAS from {path}: {e}")
+
+        if not blas_loaded:
+            print("Warning: Could not load OpenBLAS from any known location")
 
     # Try all possible library names
     lib_names = [
