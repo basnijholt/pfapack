@@ -55,6 +55,7 @@ jobs:
       shell: msys2 {0}
       run: |
         # Copy OpenBLAS DLL to the package directory
+        echo '${{ steps.msys2.outputs.msys2-location }}'
         cp /mingw64/bin/libopenblas.dll pfapack/
         ls pfapack/
 
