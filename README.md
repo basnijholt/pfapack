@@ -24,9 +24,9 @@ conda install -c conda-forge pfapack
 
 ```python
 from pfapack import pfaffian as pf
-import numpy.matlib
+import numpy.random
 
-A = numpy.matlib.rand(100, 100)
+A = numpy.random.rand(100, 100)
 A = A - A.T
 pfa1 = pf.pfaffian(A)
 pfa2 = pf.pfaffian(A, method="H")

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import numpy as np
-import numpy.matlib
+import numpy.random
 import pytest
 
 from pfapack.ctypes import pfaffian as cpf
@@ -19,7 +19,7 @@ except OSError:
 def test_ctypes_real_different_sizes():
     """Test real matrices of different sizes."""
     for n in [2, 4, 8, 16, 32]:
-        A = numpy.matlib.rand(n, n)
+        A = numpy.random.rand(n, n)
         A = A - A.T  # make skew-symmetric
 
         # Test different methods
@@ -44,7 +44,7 @@ def test_ctypes_real_different_sizes():
 def test_ctypes_complex_different_sizes():
     """Test complex matrices of different sizes."""
     for n in [2, 4, 8, 16, 32]:
-        A = numpy.matlib.rand(n, n) + 1.0j * numpy.matlib.rand(n, n)
+        A = numpy.random.rand(n, n) + 1.0j * numpy.random.rand(n, n)
         A = A - A.T  # make skew-symmetric
 
         # Test different methods
@@ -69,7 +69,7 @@ def test_ctypes_complex_different_sizes():
 def test_ctypes_uplo():
     """Test that upper and lower triangular options give same results."""
     n = 8
-    A = numpy.matlib.rand(n, n)
+    A = numpy.random.rand(n, n)
     A = A - A.T
 
     pf_upper = cpf(A, uplo="U", method="P")
