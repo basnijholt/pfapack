@@ -3,3 +3,8 @@ option('build_tests',
   value: 'enabled',
   description: 'Build test executables',
 )
+option('static',
+  type: 'boolean',
+  value: false,
+  description: 'Build static libraries instead of shared libraries'
+)
