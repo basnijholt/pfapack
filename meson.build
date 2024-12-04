@@ -171,7 +171,16 @@ c_include_dir = include_directories(
 
 # Platform-specific library type
 if host_machine.system() == 'windows'
-    # On Windows: static libraries
+    # On Windows: static libraries and explicitly link OpenBLAS
+    compiler = meson.get_compiler('c')
+
+    # Find OpenBLAS static library
+    openblas_lib = compiler.find_library('openblas',
+        dirs: ['C:/msys64/mingw64/lib'],
+        static: true,
+        required: true
+    )
+
     # Build Fortran library
     libpfapack = static_library('pfapack',
         fortran_sources,
@@ -217,7 +226,6 @@ py.install_sources(
   pure: false,
   subdir: 'pfapack'
 )
-
 
 # Build test executables
 if get_option('build_tests').allowed()
