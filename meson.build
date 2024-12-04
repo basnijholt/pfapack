@@ -19,13 +19,9 @@ m_dep = c_compiler.find_library('m', required: false)  # math library
 py = import('python').find_installation(pure: false)
 numpy_dep = dependency('numpy')
 
-# === Python and NumPy setup ===
-py = import('python').find_installation(pure: false)
-numpy_dep = dependency('numpy')
-
 numpy_include = run_command(py,
-    ['-c', 'import numpy; print(numpy.get_include())'],
-    check: true
+  ['-c', 'import numpy; print(numpy.get_include())'],
+  check: true
 ).stdout().strip()
 
 # === Platform specific BLAS/LAPACK setup ===
@@ -36,7 +32,7 @@ if host_machine.system() == 'darwin'
   blas_dep = declare_dependency()
 
 elif host_machine.system() == 'windows'
-  # Try to get OpenBLAS from NumPy first
+  # Try to get OpenBLAS from NumPy
   numpy_dir = run_command(py,
     ['-c', 'import os, numpy; print(os.path.dirname(numpy.__file__))'],
     check: true
@@ -48,16 +44,6 @@ elif host_machine.system() == 'windows'
   )
   lapack_dep = declare_dependency(dependencies: [openblas_lib])
   blas_dep = declare_dependency(dependencies: [openblas_lib])
-
-  # Copy runtime DLLs from NumPy's directory
-  foreach dll : ['libopenblas.dll']
-    dll_path = numpy_dir / dll
-    if fs.exists(dll_path)
-      install_data(dll_path,
-          install_dir: py.get_install_dir() / 'pfapack'
-      )
-    endif
-  endforeach
 
 else # Linux
   # First try system BLAS/LAPACK
