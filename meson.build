@@ -9,43 +9,39 @@ project('pfapack',
   version: run_command('pfapack/_version.py', check: true).stdout().strip(),
 )
 
-# Get compilers
+# === Compilers and basic dependencies ===
 c_compiler = meson.get_compiler('c')
 fortran_compiler = meson.get_compiler('fortran')
-
-
-
-# Dependencies
 thread_dep = dependency('threads')
 m_dep = c_compiler.find_library('m', required: false)  # math library
-py = import('python').find_installation(pure: false)
-numpy_dep = dependency('numpy')  # This gets numpy include dirs
 
-# Function to get numpy's BLAS/LAPACK info
+# === Python and NumPy setup ===
+py = import('python').find_installation(pure: false)
+numpy_dep = dependency('numpy')
+
+# Get NumPy's BLAS/LAPACK info
 numpy_blas = run_command(py,
-    ['-c', 'import numpy; print(numpy.get_include()); print(numpy.get_lib())'],
-    check: true
+  ['-c', 'import numpy; print(numpy.get_include()); print(numpy.get_lib())'],
+  check: true
 ).stdout().strip().split('\n')
 numpy_include = numpy_blas[0]
 numpy_libdir = numpy_blas[1]
 
-# Platform specific setup
+# === Platform specific BLAS/LAPACK setup ===
 if host_machine.system() == 'darwin'
   add_project_link_arguments('-framework', 'Accelerate', language: ['c', 'fortran'])
   lapack_dep = declare_dependency()
   blas_dep = declare_dependency()
 elif host_machine.system() == 'windows'
   # Use NumPy's OpenBLAS
-  compiler = meson.get_compiler('c')
   openblas_lib = compiler.find_library('openblas',
     dirs: [numpy_libdir],
     required: true
   )
   lapack_dep = declare_dependency(dependencies: [openblas_lib])
   blas_dep = declare_dependency(dependencies: [openblas_lib])
-else
-  # Linux: try to use NumPy's BLAS first
-  compiler = meson.get_compiler('c')
+else  # Linux
+  # Try to use NumPy's BLAS first
   openblas_lib = compiler.find_library('openblas',
     dirs: [numpy_libdir],
     required: false
@@ -67,7 +63,7 @@ else
   endif
 endif
 
-
+# === Source files ===
 pfapack_dir = 'original_source'
 
 # Fortran sources in correct order matching the Makefile.FORTRAN
@@ -161,10 +157,8 @@ c_sources = files(
   join_paths(pfapack_dir, 'c_interface', 'skbtrd.c'),
 )
 
-# Import Python module
-py = import('python').find_installation(pure: false)
-
-# Build Fortran library as shared
+# === Build libraries ===
+# Build Fortran library
 libpfapack = shared_library('pfapack',
   fortran_sources,
   dependencies: [lapack_dep, blas_dep, thread_dep, m_dep],
@@ -178,7 +172,7 @@ c_include_dir = include_directories(
   join_paths(pfapack_dir, 'c_interface', 'TESTING'),
 )
 
-# Build C library as shared
+# Build C library
 libcpfapack = shared_library('cpfapack',
   c_sources,
   include_directories: c_include_dir,
@@ -188,7 +182,7 @@ libcpfapack = shared_library('cpfapack',
   install_dir: py.get_install_dir() / 'pfapack',
 )
 
-# Python module
+# === Python module installation ===
 py.install_sources(
   ['pfapack/__init__.py',
    'pfapack/_version.py',
@@ -199,7 +193,7 @@ py.install_sources(
   subdir: 'pfapack'
 )
 
-# Build test executables
+# === Tests ===
 if get_option('build_tests').allowed()
   # C interface tests
   c_test_sources = files(
