@@ -191,6 +191,7 @@ py.install_sources(
   ['pfapack/__init__.py',
    'pfapack/_version.py',
    'pfapack/ctypes.py',
+   'pfapack/exceptions.py',
    'pfapack/pfaffian.py'],
   pure: false,
   subdir: 'pfapack'
