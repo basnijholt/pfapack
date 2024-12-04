@@ -17,6 +17,9 @@ static_build = get_option('static') or host_machine.system() == 'windows'
 c_compiler = meson.get_compiler('c')
 fortran_compiler = meson.get_compiler('fortran')
 
+# Import Python module
+py = import('python').find_installation(pure: false)
+
 # Dependencies
 thread_dep = dependency('threads')
 m_dep = c_compiler.find_library('m', required: false)  # math library
@@ -174,9 +177,6 @@ c_sources = files(
   join_paths(pfapack_dir, 'c_interface', 'sktrd.c'),
   join_paths(pfapack_dir, 'c_interface', 'skbtrd.c'),
 )
-
-# Import Python module
-py = import('python').find_installation(pure: false)
 
 # Include directories
 c_include_dir = include_directories(
