@@ -18,12 +18,6 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-        with:
-          submodules: recursive
-
-      - uses: actions/setup-python@v5
-        with:
-          python-version: 3.13
 
       - uses: fortran-lang/setup-fortran@v1
         id: setup-fortran
@@ -38,15 +32,8 @@ jobs:
           install: >-
             mingw-w64-x86_64-gcc-fortran
             mingw-w64-x86_64-openblas
-            mingw-w64-x86_64-pkgconf
           path-type: minimal
           release: false
-
-      - name: Install system dependencies (macOS)
-        if: runner.os == 'macOS'
-        run: |
-          brew install openblas pkg-config
-          echo "PKG_CONFIG_PATH=/usr/local/opt/openblas/lib/pkgconfig" >> $GITHUB_ENV
 
       # https://github.com/pypa/cibuildwheel/issues/563
       - name: Set macOS deployment target

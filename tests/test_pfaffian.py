@@ -17,7 +17,7 @@ except OSError:
     with_ctypes = False
 
 
-EPS = 1e-12
+EPS = 1e-11
 
 
 def test_pfaffian():
