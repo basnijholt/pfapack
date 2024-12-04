@@ -46,14 +46,8 @@ def _find_library() -> ctypes.CDLL:
     else:
         lib_name = "libcpfapack.so"
 
-    # On Windows, we need to add the package directory to PATH
-    if sys.platform == "win32":
-        os.add_dll_directory(str(_folder))
-
-    # Try multiple locations for the library
-    possible_paths = [
-        _folder / lib_name,  # Regular install
-    ]
+    # List of all possible paths
+    possible_paths = [_folder / lib_name]  # Regular install
 
     # Add build directories for editable install
     if _build_folder.exists():
@@ -61,15 +55,42 @@ def _find_library() -> ctypes.CDLL:
             if p.is_dir():
                 possible_paths.append(p / lib_name)
 
+    if sys.platform == "win32":
+        # Add all paths to DLL search path
+        for path in possible_paths:
+            if path.parent.exists():
+                try:
+                    os.add_dll_directory(str(path.parent))
+                except OSError:
+                    pass  # Ignore if directory can't be added
+
+        # Try loading just by filename first (Windows-specific behavior)
+        try:
+            return ctypes.CDLL(lib_name)
+        except OSError:
+            pass
+
+    # Try all possible full paths
+    errors = []
     for path in possible_paths:
         try:
             return ctypes.CDLL(str(path))
-        except OSError:
+        except OSError as e:
+            errors.append(f"{path}: {e}")
             continue
 
-    raise OSError(
-        f"Could not find {lib_name} in any of: {[str(p) for p in possible_paths]}"
+    # If we get here, all attempts failed
+    error_msg = "\n".join(
+        [
+            "Could not load PFAPACK library.",
+            "Attempted paths:",
+            *[f"  {e}" for e in errors],
+            f"Current directory: {os.getcwd()}",
+            f"Package directory: {_folder}",
+            f"Python path: {sys.path}",
+        ]
     )
+    raise OSError(error_msg)
 
 
 lib = _find_library()
