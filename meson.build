@@ -9,6 +9,10 @@ project('pfapack',
   version: run_command('pfapack/_version.py', check: true).stdout().strip(),
 )
 
+# NOTE(Bas): I couldn't get shared libraries to work on Windows, so I'm
+# disabling them for now.
+static_build = get_option('static') or host_machine.system() == 'windows'
+
 # Get compilers
 c_compiler = meson.get_compiler('c')
 fortran_compiler = meson.get_compiler('fortran')
@@ -54,7 +58,6 @@ else
   if rt_dep.found()
     add_project_link_arguments('-lrt', language: ['c', 'fortran'])
   endif
-
     # Add rt library for clock_gettime
     rt_dep = c_compiler.find_library('rt', required: false)
     if rt_dep.found()
@@ -182,8 +185,6 @@ c_include_dir = include_directories(
   join_paths(pfapack_dir, 'c_interface', 'TESTING'),
 )
 
-static_build = get_option('static') or host_machine.system() == 'windows'
-
 # Platform-specific library type
 if static_build
   # Build Fortran library as static
@@ -202,7 +203,6 @@ if static_build
     install_dir: py.get_install_dir() / 'pfapack',
   )
 else
-  # Build shared libraries
   # Build Fortran library as shared
   libpfapack = shared_library('pfapack',
     fortran_sources,
