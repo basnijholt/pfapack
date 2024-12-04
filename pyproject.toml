@@ -99,7 +99,12 @@ precision = 2
 before-build = "pip install meson-python"
 test-extras = ["test"]
 test-command = "pytest {package}/tests"
-skip = ["pp*", "*-win32"]  # Skip PyPy wheels and 32-bit Windows wheels
+skip = [
+    "pp*",              # Skip PyPy wheels
+    "*-win32",          # Skip 32-bit Windows
+    "*-manylinux_i686", # Skip 32-bit manylinux
+    "*-musllinux_i686", # Skip 32-bit musllinux
+]
 
 [tool.cibuildwheel.linux]
 before-all = "yum install -y openblas-devel"
