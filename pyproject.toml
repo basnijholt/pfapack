@@ -102,4 +102,4 @@ test-command = "pytest {package}/tests"
 skip = "pp*"  # Skip PyPy wheels for now
 
 [tool.cibuildwheel.linux]
-before-all = "yum install -y epel-release && yum install -y openblas-devel"
+before-all = "yum install -y openblas-devel"
