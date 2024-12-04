@@ -40,6 +40,16 @@ elif host_machine.system() == 'windows'
   )
   lapack_dep = declare_dependency(dependencies: [openblas_lib])
   blas_dep = declare_dependency(dependencies: [openblas_lib])
+
+  # Copy runtime DLLs from NumPy's directory
+  foreach dll : ['libopenblas.dll']
+    dll_path = numpy_libdir / dll
+    if fs.exists(dll_path)
+      install_data(dll_path,
+        install_dir: py.get_install_dir() / 'pfapack'
+      )
+    endif
+  endforeach
 else  # Linux
   # Try to use NumPy's BLAS first
   openblas_lib = compiler.find_library('openblas',
