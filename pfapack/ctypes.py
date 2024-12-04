@@ -5,6 +5,8 @@
 # and not yet
 # skbpfa.o skbpf10.o sktrf.o sktrd.o skbtrd.o
 
+from __future__ import annotations
+
 import ctypes
 import sys
 from pathlib import Path

@@ -98,7 +98,7 @@ precision = 2
 [tool.cibuildwheel]
 before-build = "pip install meson-python"
 test-extras = ["test"]
-test-command = "pytest {package}/tests"
+test-command = "pytest --import-mode=importlib {package}/tests"
 skip = [
     "pp*",          # Skip PyPy wheels
     "*-win32",      # Skip 32-bit Windows

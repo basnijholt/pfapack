@@ -3,10 +3,6 @@ import numpy.linalg
 import numpy.matlib
 import pytest
 
-import sys  # isort:skip
-
-sys.path.append("..")
-
 from pfapack import pfaffian as pf  # noqa isort:skip
 
 try:
