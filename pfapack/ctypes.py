@@ -27,16 +27,17 @@ def _find_library() -> ctypes.CDLL:
     _folder: Final = Path(__file__).parent
     _build_folder: Final = _folder.parent / "build"
 
-    # On Windows, load OpenBLAS first
+    # On Windows, ensure OpenBLAS and its dependencies can be found
     if os.name == "nt":
-        openblas_path = _folder / "libopenblas.dll"
-        if openblas_path.exists():
+        # Add MSYS2 bin directory to DLL search path
+        msys2_bin = Path("C:/msys64/mingw64/bin")
+        if msys2_bin.exists():
+            os.add_dll_directory(str(msys2_bin))  # type: ignore[attr-defined]
             try:
-                ctypes.CDLL(str(openblas_path))
+                # Load OpenBLAS directly from MSYS2
+                ctypes.CDLL(str(msys2_bin / "libopenblas.dll"))
             except OSError as e:
                 print(f"Warning: Failed to load OpenBLAS: {e}")
-        else:
-            print(f"Warning: OpenBLAS DLL not found at {openblas_path}")
 
     # Try all possible library names
     lib_names = [
