@@ -46,25 +46,14 @@ def _find_library() -> ctypes.CDLL:
     else:
         lib_name = "libcpfapack.so"
 
+    # On Windows, we need to add the package directory to PATH
+    if sys.platform == "win32":
+        os.add_dll_directory(str(_folder))
+
     # Try multiple locations for the library
     possible_paths = [
         _folder / lib_name,  # Regular install
     ]
-
-    # On Windows, also look for the library in the PATH
-    if sys.platform == "win32":
-        # First try loading directly by name (Windows searches PATH and package dir)
-        try:
-            return ctypes.CDLL(lib_name)
-        except OSError:
-            pass
-
-        # Also look in the Windows System directories
-        system_paths = [
-            Path(sys.prefix) / "Library" / "bin",  # Conda installation
-            Path(os.environ.get("SYSTEMROOT", "C:\\Windows")) / "System32",
-        ]
-        possible_paths.extend(p / lib_name for p in system_paths)
 
     # Add build directories for editable install
     if _build_folder.exists():
