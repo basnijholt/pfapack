@@ -19,23 +19,31 @@ m_dep = c_compiler.find_library('m', required: false)  # math library
 py = import('python').find_installation(pure: false)
 numpy_dep = dependency('numpy')
 
-# Get NumPy's BLAS/LAPACK info
-numpy_blas = run_command(py,
-  ['-c', 'import numpy; print(numpy.get_include()); print(numpy.get_lib())'],
-  check: true
-).stdout().strip().split('\n')
-numpy_include = numpy_blas[0]
-numpy_libdir = numpy_blas[1]
+# === Python and NumPy setup ===
+py = import('python').find_installation(pure: false)
+numpy_dep = dependency('numpy')
+
+numpy_include = run_command(py,
+    ['-c', 'import numpy; print(numpy.get_include())'],
+    check: true
+).stdout().strip()
 
 # === Platform specific BLAS/LAPACK setup ===
 if host_machine.system() == 'darwin'
+  # Use Apple's Accelerate framework
   add_project_link_arguments('-framework', 'Accelerate', language: ['c', 'fortran'])
   lapack_dep = declare_dependency()
   blas_dep = declare_dependency()
+
 elif host_machine.system() == 'windows'
-  # Use NumPy's OpenBLAS
+  # Try to get OpenBLAS from NumPy first
+  numpy_dir = run_command(py,
+    ['-c', 'import os, numpy; print(os.path.dirname(numpy.__file__))'],
+    check: true
+  ).stdout().strip()
+
   openblas_lib = compiler.find_library('openblas',
-    dirs: [numpy_libdir],
+    dirs: [numpy_dir],
     required: true
   )
   lapack_dep = declare_dependency(dependencies: [openblas_lib])
@@ -43,27 +51,32 @@ elif host_machine.system() == 'windows'
 
   # Copy runtime DLLs from NumPy's directory
   foreach dll : ['libopenblas.dll']
-    dll_path = numpy_libdir / dll
+    dll_path = numpy_dir / dll
     if fs.exists(dll_path)
       install_data(dll_path,
-        install_dir: py.get_install_dir() / 'pfapack'
+          install_dir: py.get_install_dir() / 'pfapack'
       )
     endif
   endforeach
-else  # Linux
-  # Try to use NumPy's BLAS first
-  openblas_lib = compiler.find_library('openblas',
-    dirs: [numpy_libdir],
-    required: false
-  )
 
-  if openblas_lib.found()
+else # Linux
+  # First try system BLAS/LAPACK
+  blas_dep = dependency('blas', required: false)
+  lapack_dep = dependency('lapack', required: false)
+
+  if not blas_dep.found() or not lapack_dep.found()
+    # Fall back to NumPy's OpenBLAS
+    numpy_dir = run_command(py,
+      ['-c', 'import os, numpy; print(os.path.dirname(numpy.__file__))'],
+      check: true
+    ).stdout().strip()
+
+    openblas_lib = compiler.find_library('openblas',
+      dirs: [numpy_dir],
+      required: true
+    )
     blas_dep = openblas_lib
     lapack_dep = openblas_lib
-  else
-    # Fall back to system BLAS/LAPACK
-    blas_dep = compiler.find_library('blas', required: true)
-    lapack_dep = compiler.find_library('lapack', required: true)
   endif
 
   # Add rt library for clock_gettime
