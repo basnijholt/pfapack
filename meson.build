@@ -13,50 +13,60 @@ project('pfapack',
 c_compiler = meson.get_compiler('c')
 fortran_compiler = meson.get_compiler('fortran')
 
+
+
 # Dependencies
 thread_dep = dependency('threads')
 m_dep = c_compiler.find_library('m', required: false)  # math library
+py = import('python').find_installation(pure: false)
+numpy_dep = dependency('numpy')  # This gets numpy include dirs
 
-if host_machine.system() == 'darwin'  # macOS
+# Function to get numpy's BLAS/LAPACK info
+numpy_blas = run_command(py,
+    ['-c', 'import numpy; print(numpy.get_include()); print(numpy.get_lib())'],
+    check: true
+).stdout().strip().split('\n')
+numpy_include = numpy_blas[0]
+numpy_libdir = numpy_blas[1]
+
+# Platform specific setup
+if host_machine.system() == 'darwin'
   add_project_link_arguments('-framework', 'Accelerate', language: ['c', 'fortran'])
   lapack_dep = declare_dependency()
   blas_dep = declare_dependency()
 elif host_machine.system() == 'windows'
-  # On Windows, find OpenBLAS which includes LAPACK
-  openblas_lib = dependency('openblas', required: false)
-  if not openblas_lib.found()
-    # Fallback to manual detection
-    compiler = meson.get_compiler('c')
-    openblas_lib = compiler.find_library('libopenblas',
-      dirs: ['C:/msys64/mingw64/lib'],
-      required: true)
-  endif
-  # OpenBLAS includes both BLAS and LAPACK
+  # Use NumPy's OpenBLAS
+  compiler = meson.get_compiler('c')
+  openblas_lib = compiler.find_library('openblas',
+    dirs: [numpy_libdir],
+    required: true
+  )
   lapack_dep = declare_dependency(dependencies: [openblas_lib])
   blas_dep = declare_dependency(dependencies: [openblas_lib])
-else  # Linux
+else
+  # Linux: try to use NumPy's BLAS first
+  compiler = meson.get_compiler('c')
+  openblas_lib = compiler.find_library('openblas',
+    dirs: [numpy_libdir],
+    required: false
+  )
+
+  if openblas_lib.found()
+    blas_dep = openblas_lib
+    lapack_dep = openblas_lib
+  else
+    # Fall back to system BLAS/LAPACK
+    blas_dep = compiler.find_library('blas', required: true)
+    lapack_dep = compiler.find_library('lapack', required: true)
+  endif
+
   # Add rt library for clock_gettime
   rt_dep = c_compiler.find_library('rt', required: false)
   if rt_dep.found()
     add_project_link_arguments('-lrt', language: ['c', 'fortran'])
   endif
-  # Try multiple methods to find OpenBLAS
-  openblas_dep = dependency('openblas', required: false)
-  if not openblas_dep.found()
-    # Fallback to manual detection
-    openblas_dep = c_compiler.find_library('openblas', required: false)
-  endif
-
-  if openblas_dep.found()
-    # OpenBLAS includes both BLAS and LAPACK
-    blas_dep = declare_dependency(dependencies: [openblas_dep])
-    lapack_dep = declare_dependency(dependencies: [openblas_dep])
-  else
-    # Fall back to separate BLAS and LAPACK
-    blas_dep = c_compiler.find_library('blas', required: true)
-    lapack_dep = c_compiler.find_library('lapack', required: true)
-  endif
 endif
+
 
 pfapack_dir = 'original_source'
 

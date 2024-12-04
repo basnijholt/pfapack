@@ -1,6 +1,6 @@
 [build-system]
 build-backend = "mesonpy"
-requires = ["meson-python", "versioningit"]
+requires = ["meson-python", "versioningit", "numpy"]
 
 [project]
 name = "pfapack"
