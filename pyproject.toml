@@ -83,6 +83,7 @@ addopts = """
     --cov-append
     --cov-fail-under=30
     --cov-report=term-missing
+    --import-mode=importlib
 """
 norecursedirs = ["docs"]
 
