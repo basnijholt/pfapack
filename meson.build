@@ -13,9 +13,6 @@ project('pfapack',
 c_compiler = meson.get_compiler('c')
 fortran_compiler = meson.get_compiler('fortran')
 
-# Import Python module
-py = import('python').find_installation(pure: false)
-
 # Dependencies
 thread_dep = dependency('threads')
 m_dep = c_compiler.find_library('m', required: false)  # math library
@@ -43,28 +40,22 @@ else  # Linux
   if rt_dep.found()
     add_project_link_arguments('-lrt', language: ['c', 'fortran'])
   endif
-    # Add rt library for clock_gettime
-    rt_dep = c_compiler.find_library('rt', required: false)
-    if rt_dep.found()
-        add_project_link_arguments('-lrt', language: ['c', 'fortran'])
-    endif
+  # Try multiple methods to find OpenBLAS
+  openblas_dep = dependency('openblas', required: false)
+  if not openblas_dep.found()
+    # Fallback to manual detection
+    openblas_dep = c_compiler.find_library('openblas', required: false)
+  endif
 
-    # Try multiple methods to find OpenBLAS
-    openblas_dep = dependency('openblas', required: false)
-    if not openblas_dep.found()
-        # Fallback to manual detection
-        openblas_dep = c_compiler.find_library('openblas', required: false)
-    endif
-
-    if openblas_dep.found()
-        # OpenBLAS includes both BLAS and LAPACK
-        blas_dep = declare_dependency(dependencies: [openblas_dep])
-        lapack_dep = declare_dependency(dependencies: [openblas_dep])
-    else
-        # Fall back to separate BLAS and LAPACK
-        blas_dep = c_compiler.find_library('blas', required: true)
-        lapack_dep = c_compiler.find_library('lapack', required: true)
-    endif
+  if openblas_dep.found()
+    # OpenBLAS includes both BLAS and LAPACK
+    blas_dep = declare_dependency(dependencies: [openblas_dep])
+    lapack_dep = declare_dependency(dependencies: [openblas_dep])
+  else
+    # Fall back to separate BLAS and LAPACK
+    blas_dep = c_compiler.find_library('blas', required: true)
+    lapack_dep = c_compiler.find_library('lapack', required: true)
+  endif
 endif
 
 pfapack_dir = 'original_source'
@@ -165,6 +156,9 @@ c_include_dir = include_directories(
   join_paths(pfapack_dir, 'c_interface'),
   join_paths(pfapack_dir, 'c_interface', 'TESTING'),
 )
+
+# Import Python module
+py = import('python').find_installation(pure: false)
 
 # Build Fortran library as shared
 libpfapack = shared_library('pfapack',
