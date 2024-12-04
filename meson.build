@@ -35,7 +35,7 @@ elif host_machine.system() == 'windows'
       required: true)
       if openblas_lib.found()
         fs = import('fs')
-        fs.copyfile('C:/msys64/mingw64/lib/libopenblas.dll', 'pfapack/libopenblas.dll')
+        fs.copyfile('C:/msys64/mingw64/bin/libopenblas.dll', 'pfapack/libopenblas.dll')
       endif
   endif
   # OpenBLAS includes both BLAS and LAPACK
