@@ -98,7 +98,7 @@ precision = 2
 [tool.cibuildwheel]
 before-build = "pip install meson-python"
 test-extras = ["test"]
-test-command = "pytest"
+test-command = "pytest {package}/tests"
 skip = "pp*"  # Skip PyPy wheels for now
 
 [tool.cibuildwheel.linux]
