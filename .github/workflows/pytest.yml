@@ -51,7 +51,7 @@ jobs:
         install: >-
           mingw-w64-x86_64-gcc-fortran
           mingw-w64-x86_64-openblas
-          mingw-w64-x86_64-pkgconf
+          mingw-w64-x86_64-pkgconf  # lets meson find openblas.pc, skipping its flaky CMake probe
         path-type: minimal
         release: false
 
