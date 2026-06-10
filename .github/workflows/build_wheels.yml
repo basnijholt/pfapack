@@ -19,7 +19,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # On Windows the MSYS2 toolchain below is used instead; the gcc that
+      # this action installs via chocolatey cannot find its own headers
+      # (fatal error: stdlib.h) when invoked through the chocolatey shims.
       - uses: fortran-lang/setup-fortran@v1
+        if: runner.os != 'Windows'
         id: setup-fortran
         with:
           version: 12 # should be available on all runners
@@ -34,6 +38,13 @@ jobs:
             mingw-w64-x86_64-openblas
           path-type: minimal
           release: false
+
+      # Make the MSYS2 gcc/gfortran/OpenBLAS visible to cibuildwheel;
+      # meson.build already searches C:/msys64/mingw64/lib for OpenBLAS
+      - name: Add MSYS2 MinGW64 to PATH (Windows)
+        if: runner.os == 'Windows'
+        run: echo "C:/msys64/mingw64/bin" >> "$GITHUB_PATH"
+        shell: bash
 
       # https://github.com/pypa/cibuildwheel/issues/563
       - name: Set macOS deployment target
