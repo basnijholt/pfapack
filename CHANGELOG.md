@@ -4,13 +4,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [1.1.1] - 2026-06-10
 
 ### Changed
 - Windows wheels are now repaired with `delvewheel`, bundling OpenBLAS and the
   MinGW runtime DLLs. Installing from PyPI no longer requires MSYS2; only
   building from source on Windows does. CI verifies the wheel is
   self-contained by running the test suite with MSYS2 hidden.
+  ([#55](https://github.com/basnijholt/pfapack/pull/55))
 
 ## [1.1.0] - 2026-06-10
 
@@ -88,6 +89,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - Fix for integer valued arrays.
 
+[1.1.1]: https://github.com/basnijholt/pfapack/releases/tag/v1.1.1
 [1.1.0]: https://github.com/basnijholt/pfapack/releases/tag/v1.1.0
 [1.0.2]: https://github.com/basnijholt/pfapack/releases/tag/v1.0.2
 [1.0.1]: https://github.com/basnijholt/pfapack/releases/tag/v1.0.1
