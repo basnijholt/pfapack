@@ -15,6 +15,9 @@ def _assert_skew_symmetric(A):
     that matrices with very large or very small entries are handled
     correctly (an absolute tolerance would spuriously reject large
     matrices and trivially accept small ones).
+
+    Note that the tolerance is floored at scale 1, so asymmetries
+    smaller than 1e-12 in matrices with entries below ~1 go undetected.
     """
     tol = 1e-12 * max(1.0, np.abs(A).max())
     assert np.abs(A + A.T).max() < tol

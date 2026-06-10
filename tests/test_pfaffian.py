@@ -112,10 +112,11 @@ def test_skew_symmetry_check_complex():
 def test_skew_symmetry_check_large_scale():
     # A skew-symmetric matrix with entries ~1e8 carries roundoff of order
     # 1e-8 in A + A.T; an absolute tolerance would spuriously reject it.
-    A = numpy.random.rand(10, 10)
+    rng = numpy.random.default_rng(0)
+    A = rng.random((10, 10))
     A = (A - A.T) * 1e8
     # simulate floating-point roundoff at the matrix scale
-    A += numpy.random.standard_normal((10, 10)) * 1e-8
+    A += rng.standard_normal((10, 10)) * 1e-8
 
     pfa1 = pf.pfaffian(A)
     pfa2 = pf.pfaffian(A, method="H")
@@ -128,7 +129,8 @@ def test_skew_symmetry_check_large_scale():
 def test_skew_symmetry_check_tiny_scale():
     # A tiny-scaled skew-symmetric matrix must pass the check and yield
     # the correct (tiny) Pfaffian.
-    A = numpy.random.rand(8, 8)
+    rng = numpy.random.default_rng(0)
+    A = rng.random((8, 8))
     A = (A - A.T) * 1e-12
 
     pfa1 = pf.pfaffian_LTL(A)
