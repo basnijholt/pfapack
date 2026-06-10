@@ -29,7 +29,14 @@ def _find_library() -> ctypes.CDLL:
 
     # On Windows, ensure OpenBLAS and its dependencies can be found
     if os.name == "nt":
-        # Common locations for OpenBLAS on Windows
+        # Wheels repaired with delvewheel bundle OpenBLAS and the MinGW
+        # runtime in pfapack.libs; no system installation is needed.
+        _bundled = _folder.parent / "pfapack.libs"
+        if _bundled.exists():
+            os.add_dll_directory(str(_bundled))  # type: ignore[attr-defined]
+            return _load_pfapack_dll(_folder, _build_folder)
+
+        # Source builds: hunt for a system OpenBLAS.
         possible_blas_paths = [
             Path("C:/msys64/mingw64/bin"),  # MSYS2 MinGW64
             Path("C:/msys64/ucrt64/bin"),  # MSYS2 UCRT64
@@ -56,6 +63,11 @@ def _find_library() -> ctypes.CDLL:
         if not blas_loaded:
             print("Warning: Could not load OpenBLAS from any known location")
 
+    return _load_pfapack_dll(_folder, _build_folder)
+
+
+def _load_pfapack_dll(_folder: Path, _build_folder: Path) -> ctypes.CDLL:
+    """Load the PFAPACK C library from the package or build directory."""
     # Try all possible library names
     lib_names = [
         "cpfapack.dll",

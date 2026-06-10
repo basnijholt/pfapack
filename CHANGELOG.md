@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Changed
+- Windows wheels are now repaired with `delvewheel`, bundling OpenBLAS and the
+  MinGW runtime DLLs. Installing from PyPI no longer requires MSYS2; only
+  building from source on Windows does. CI verifies the wheel is
+  self-contained by running the test suite with MSYS2 hidden.
+
 ## [1.1.0] - 2026-06-10
 
 ### Fixed

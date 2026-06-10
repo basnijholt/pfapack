@@ -89,6 +89,14 @@ skip = [
     "cp39-*",       # Skip Python 3.9
 ]
 
+[tool.cibuildwheel.windows]
+before-build = "pip install delvewheel meson-python"
+# Bundle OpenBLAS and the MinGW runtime DLLs into the wheel so that installing
+# from PyPI works without MSYS2. --analyze-existing is required because the
+# pfapack libraries are plain DLLs loaded via ctypes, not extension modules,
+# which delvewheel would otherwise not scan for dependencies.
+repair-wheel-command = "delvewheel repair -w {dest_dir} {wheel} --add-path C:/msys64/mingw64/bin --analyze-existing"
+
 [tool.cibuildwheel.linux]
 # manylinux2014's glibc 2.17 is too old to install current scipy wheels
 # (manylinux_2_27+) in the test environment, forcing a doomed source build
