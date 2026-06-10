@@ -56,6 +56,11 @@ jobs:
         with:
           submodules: recursive
 
+      # meson-python configures the project even for an sdist build,
+      # and meson.build requires BLAS/LAPACK and a Fortran compiler
+      - name: Install OpenBLAS
+        run: sudo apt-get update && sudo apt-get install -y libopenblas-dev gfortran
+
       - name: Build SDist
         run: pipx run build --sdist
 
