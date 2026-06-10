@@ -95,7 +95,10 @@ before-build = "pip install delvewheel meson-python"
 # from PyPI works without MSYS2. --analyze-existing is required because the
 # pfapack libraries are plain DLLs loaded via ctypes, not extension modules,
 # which delvewheel would otherwise not scan for dependencies.
-repair-wheel-command = "delvewheel repair -w {dest_dir} {wheel} --add-path C:/msys64/mingw64/bin --analyze-existing"
+# --ignore-existing stops delvewheel from treating the intra-wheel dependency
+# of libcpfapack.dll on libpfapack.dll as missing; it resolves at runtime from
+# the package directory.
+repair-wheel-command = "delvewheel repair -w {dest_dir} {wheel} --add-path C:/msys64/mingw64/bin --analyze-existing --ignore-existing"
 
 [tool.cibuildwheel.linux]
 # manylinux2014's glibc 2.17 is too old to install current scipy wheels
