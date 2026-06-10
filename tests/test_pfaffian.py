@@ -75,6 +75,69 @@ def test_decompositions():
     assert numpy.linalg.norm(A - Q * T * Q.T) / numpy.linalg.norm(A) < EPS
 
 
+def test_skew_symmetry_check_negative_deviation():
+    # Regression test: the old check `abs((A + A.T).max()) < 1e-14` only
+    # looked at the largest entry of A + A.T, so a matrix whose deviation
+    # from skew-symmetry is purely *negative* slipped through silently.
+    A = np.array([[0.0, -1.0], [-1.0, 0.0]])  # symmetric, (A + A.T).max() == 0
+
+    for func in (
+        pf.pfaffian,
+        pf.pfaffian_LTL,
+        pf.pfaffian_householder,
+        pf.pfaffian_schur,
+        pf.skew_LTL,
+        pf.skew_tridiagonalize,
+    ):
+        with pytest.raises(AssertionError):
+            func(A)
+
+
+def test_skew_symmetry_check_complex():
+    # The old check compared complex numbers lexicographically (real part
+    # first), which is not a magnitude check; this matrix passed it.
+    A = np.array([[0.0, -1.0 + 1.0j], [-1.0 + 1.0j, 0.0]])
+
+    for func in (
+        pf.pfaffian,
+        pf.pfaffian_LTL,
+        pf.pfaffian_householder,
+        pf.skew_LTL,
+        pf.skew_tridiagonalize,
+    ):
+        with pytest.raises(AssertionError):
+            func(A)
+
+
+def test_skew_symmetry_check_large_scale():
+    # A skew-symmetric matrix with entries ~1e8 carries roundoff of order
+    # 1e-8 in A + A.T; an absolute tolerance would spuriously reject it.
+    A = numpy.random.rand(10, 10)
+    A = (A - A.T) * 1e8
+    # simulate floating-point roundoff at the matrix scale
+    A += numpy.random.standard_normal((10, 10)) * 1e-8
+
+    pfa1 = pf.pfaffian(A)
+    pfa2 = pf.pfaffian(A, method="H")
+    pfa3 = pf.pfaffian_schur(A)
+
+    assert abs((pfa1 - pfa2) / pfa1) < EPS
+    assert abs((pfa1 - pfa3) / pfa1) < EPS
+
+
+def test_skew_symmetry_check_tiny_scale():
+    # A tiny-scaled skew-symmetric matrix must pass the check and yield
+    # the correct (tiny) Pfaffian.
+    A = numpy.random.rand(8, 8)
+    A = (A - A.T) * 1e-12
+
+    pfa1 = pf.pfaffian_LTL(A)
+    pfa2 = pf.pfaffian_householder(A)
+
+    assert pfa1 != 0
+    assert abs((pfa1 - pfa2) / pfa1) < EPS
+
+
 @pytest.mark.skipif(not with_ctypes, reason="the libs might not be installed")
 def test_ctypes():
     for method in ("P", "H"):

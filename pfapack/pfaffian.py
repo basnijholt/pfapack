@@ -8,6 +8,18 @@ import scipy.linalg as la
 import scipy.sparse as sp
 
 
+def _assert_skew_symmetric(A):
+    """Assert that A is skew-symmetric up to rounding errors at its scale.
+
+    The tolerance is relative to the magnitude of the entries of A, so
+    that matrices with very large or very small entries are handled
+    correctly (an absolute tolerance would spuriously reject large
+    matrices and trivially accept small ones).
+    """
+    tol = 1e-12 * max(1.0, np.abs(A).max())
+    assert np.abs(A + A.T).max() < tol
+
+
 def householder_real(x):
     """(v, tau, alpha) = householder_real(x)
 
@@ -90,7 +102,7 @@ def skew_tridiagonalize(A, overwrite_a=False, calc_q=True):
     # Check if matrix is square
     assert A.shape[0] == A.shape[1] > 0
     # Check if it's skew-symmetric
-    assert abs((A + A.T).max()) < 1e-14
+    _assert_skew_symmetric(A)
 
     A = np.asarray(A)  # the slice views work only properly for arrays
 
@@ -149,7 +161,7 @@ def skew_LTL(A, overwrite_a=False, calc_L=True, calc_P=True):
     # Check if matrix is square
     assert A.shape[0] == A.shape[1] > 0
     # Check if it's skew-symmetric
-    assert abs((A + A.T).max()) < 1e-14
+    _assert_skew_symmetric(A)
 
     n = A.shape[0]
     A = np.asarray(A)  # the slice views work only properly for arrays
@@ -236,7 +248,7 @@ def pfaffian(A, overwrite_a=False, method="P"):
     # Check if matrix is square
     assert A.shape[0] == A.shape[1] > 0
     # Check if it's skew-symmetric
-    assert abs((A + A.T).max()) < 1e-14
+    _assert_skew_symmetric(A)
     # Check that the method variable is appropriately set
     assert method == "P" or method == "H"
 
@@ -257,7 +269,7 @@ def pfaffian_LTL(A, overwrite_a=False):
     # Check if matrix is square
     assert A.shape[0] == A.shape[1] > 0
     # Check if it's skew-symmetric
-    assert abs((A + A.T).max()) < 1e-14
+    _assert_skew_symmetric(A)
 
     n, m = A.shape
     # type check to fix problems with integer numbers
@@ -334,7 +346,7 @@ def pfaffian_householder(A, overwrite_a=False):
     # Check if matrix is square
     assert A.shape[0] == A.shape[1] > 0
     # Check if it's skew-symmetric
-    assert abs((A + A.T).max()) < 1e-14
+    _assert_skew_symmetric(A)
 
     n = A.shape[0]
 
@@ -402,7 +414,7 @@ def pfaffian_schur(A, overwrite_a=False):
 
     assert A.shape[0] == A.shape[1] > 0
 
-    assert abs(A + A.T).max() < 1e-14
+    _assert_skew_symmetric(A)
 
     # Quick return if possible
     if A.shape[0] % 2 == 1:
