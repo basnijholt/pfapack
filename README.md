@@ -43,7 +43,7 @@ print(pfa1, pfa2)
 ```
 
 > [!NOTE]
-> The Windows wheels on PyPI bundle OpenBLAS and the MinGW runtime, so `pip install pfapack` works without any external dependencies. Building from source on Windows still requires MSYS2 with the MinGW64 toolchain (`mingw-w64-x86_64-gcc-fortran`, `mingw-w64-x86_64-openblas`, and `mingw-w64-x86_64-pkgconf`). We welcome contributions to improve the Windows build system, such as using Microsoft's toolchain (MSVC) directly.
+> Building from source on Windows (only needed if no wheel is available for your platform) requires MSYS2 with the MinGW64 toolchain (`mingw-w64-x86_64-gcc-fortran`, `mingw-w64-x86_64-openblas`, and `mingw-w64-x86_64-pkgconf`).
 
 ## Citing
 
