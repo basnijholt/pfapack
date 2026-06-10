@@ -34,10 +34,11 @@ jobs:
         uses: msys2/setup-msys2@v2
         with:
           msystem: MINGW64
+          # pkgconf lets meson find openblas.pc, skipping its flaky CMake probe
           install: >-
             mingw-w64-x86_64-gcc-fortran
             mingw-w64-x86_64-openblas
-            mingw-w64-x86_64-pkgconf  # lets meson find openblas.pc, skipping its flaky CMake probe
+            mingw-w64-x86_64-pkgconf
           path-type: minimal
           release: false
 
