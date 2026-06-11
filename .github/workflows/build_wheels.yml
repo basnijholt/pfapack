@@ -69,7 +69,7 @@ jobs:
       - uses: actions/setup-python@v5
         if: runner.os == 'Windows'
         with:
-          python-version: "3.13"
+          python-version: "3.14"
 
       - name: Check wheel is self-contained (Windows)
         if: runner.os == 'Windows'
