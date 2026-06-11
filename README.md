@@ -51,6 +51,9 @@ from pfapack.ctypes import pfaffian_batched
 matrices = numpy.random.rand(1000, 8, 8)
 matrices = matrices - matrices.transpose(0, 2, 1)
 pfaffians = pfaffian_batched(matrices)  # shape (1000,)
+
+# Large batches can additionally be spread over multiple threads:
+pfaffians = pfaffian_batched(matrices, workers=-1)  # all cores
 ```
 
 > [!NOTE]

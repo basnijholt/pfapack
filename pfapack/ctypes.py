@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import ctypes
 import os
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from typing import Final
 
@@ -261,6 +262,7 @@ def pfaffian_batched(
     matrices: np.ndarray,
     uplo: str = "U",
     method: str = "P",
+    workers: int = 1,
 ) -> np.ndarray:
     """Compute the Pfaffian of a batch of skew-symmetric matrices.
 
@@ -281,6 +283,12 @@ def pfaffian_batched(
         If 'U' ('L'), the upper (lower) triangle of each matrix is used.
     method : str
         If 'P' ('H'), the Parley-Reid (Householder) algorithm is used.
+    workers : int
+        Number of threads to spread the batch over. The matrices are
+        independent, so the speedup is roughly linear in the number of
+        physical cores. -1 uses all available cores. Default is 1
+        (serial); leave it at 1 if your application already
+        parallelizes at a higher level.
 
     Returns
     -------
@@ -294,7 +302,7 @@ def pfaffian_batched(
     InvalidDimensionError
         If the input is not an array of square matrices.
     InvalidParameterError
-        If uplo or method parameters are invalid.
+        If uplo, method, or workers parameters are invalid.
     ComputationError
         If the computation fails.
     """
@@ -302,6 +310,12 @@ def pfaffian_batched(
         raise InvalidParameterError(f"'uplo' must be 'U' or 'L', got {uplo!r}")
     if method not in ("P", "H"):
         raise InvalidParameterError(f"'method' must be 'P' or 'H', got {method!r}")
+    if workers == -1:
+        workers = os.cpu_count() or 1
+    if not isinstance(workers, int) or workers < 1:
+        raise InvalidParameterError(
+            f"'workers' must be a positive integer or -1, got {workers!r}"
+        )
 
     matrices = np.asarray(matrices)
     if matrices.ndim < 2 or matrices.shape[-1] != matrices.shape[-2]:
@@ -324,11 +338,34 @@ def pfaffian_batched(
     # Copies only if the dtype or memory layout requires it.
     a = np.ascontiguousarray(matrices, dtype=dtype).reshape(batch_size, n, n)
     pfaffians = np.empty(batch_size, dtype=dtype)
+    uplo_bytes = uplo.encode()
+    method_bytes = method.encode()
 
-    if batch_size > 0:
-        success = func(batch_size, n, a, pfaffians, uplo.encode(), method.encode())
-        if success != 0:
-            raise ComputationError(f"PFAPACK returned error code {success}")
+    def run(start: int, stop: int) -> int:
+        return func(
+            stop - start,
+            n,
+            a[start:stop],
+            pfaffians[start:stop],
+            uplo_bytes,
+            method_bytes,
+        )
+
+    workers = min(workers, batch_size)
+    if workers <= 1:
+        if batch_size > 0:
+            success = run(0, batch_size)
+            if success != 0:
+                raise ComputationError(f"PFAPACK returned error code {success}")
+    else:
+        # ctypes releases the GIL during the C call and every chunk is an
+        # independent contiguous view, so threads scale near-linearly.
+        bounds = np.linspace(0, batch_size, workers + 1, dtype=np.intp)
+        with ThreadPoolExecutor(max_workers=workers) as executor:
+            results = executor.map(run, bounds[:-1], bounds[1:])
+        for success in results:
+            if success != 0:
+                raise ComputationError(f"PFAPACK returned error code {success}")
 
     # For 2D input batch_shape is (), so this returns a scalar.
     return pfaffians.reshape(batch_shape)[()]

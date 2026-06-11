@@ -28,8 +28,9 @@ def make_skew(batch_shape, n, complex_, seed=0):
 
 
 # N=6 and N=10 have odd N/2, exercising the (-1)^(N/2) sign correction
-# of the internal transpose-elimination trick.
-@pytest.mark.parametrize("n", [2, 4, 6, 8, 10])
+# of the internal transpose-elimination trick. N=24/26 sit on either
+# side of the small-N fast-path dispatch threshold.
+@pytest.mark.parametrize("n", [2, 4, 6, 8, 10, 24, 26])
 @pytest.mark.parametrize("complex_", [False, True])
 @pytest.mark.parametrize("method", ["P", "H"])
 def test_matches_single_matrix(n, complex_, method):
@@ -52,6 +53,49 @@ def test_uplo_lower(complex_):
         rtol=EPS,
         atol=EPS,
     )
+
+
+# N=8 takes the small-N fast path, N=32 the Fortran path.
+@pytest.mark.parametrize("n", [8, 32])
+@pytest.mark.parametrize("uplo", ["U", "L"])
+@pytest.mark.parametrize("complex_", [False, True])
+def test_unreferenced_triangle_is_ignored(n, uplo, complex_):
+    matrices = make_skew((5,), n, complex_, seed=8)
+    reference = pfaffian_batched(matrices, uplo=uplo)
+
+    # Poison the triangle that the documentation promises is never read.
+    poisoned = matrices.copy()
+    rows, cols = np.tril_indices(n, k=-1)
+    if uplo == "L":
+        rows, cols = cols, rows
+    poisoned[:, rows, cols] = np.nan
+
+    result = pfaffian_batched(poisoned, uplo=uplo)
+    np.testing.assert_allclose(result, reference, rtol=EPS, atol=EPS)
+
+
+@pytest.mark.parametrize("workers", [2, 8, -1])
+@pytest.mark.parametrize("complex_", [False, True])
+def test_workers_match_serial(workers, complex_):
+    matrices = make_skew((1000,), 8, complex_, seed=9)
+    serial = pfaffian_batched(matrices)
+    threaded = pfaffian_batched(matrices, workers=workers)
+    # Same kernel runs on each chunk, so results are bitwise identical.
+    np.testing.assert_array_equal(threaded, serial)
+
+
+def test_workers_more_than_batch():
+    matrices = make_skew((3,), 4, complex_=False, seed=10)
+    np.testing.assert_array_equal(
+        pfaffian_batched(matrices, workers=16), pfaffian_batched(matrices)
+    )
+
+
+def test_workers_invalid():
+    matrices = make_skew((2,), 4, complex_=False, seed=11)
+    for workers in (0, -2, 1.5):
+        with pytest.raises(InvalidParameterError):
+            pfaffian_batched(matrices, workers=workers)
 
 
 def test_known_values():

@@ -70,11 +70,18 @@
   pf(A^T) = pf(-A) = (-1)^(N/2) pf(A) to correct the sign of the
   result, avoiding an explicit transpose of every matrix in the batch.
 
+  For small matrices (N <= PF_SMALL_N_MAX) and MTHD = 'P', a hand-rolled
+  Parlett-Reid elimination with partial pivoting is used instead of the
+  Fortran kernels. It performs the same algorithm with the same pivoting
+  strategy, but avoids the LAPACK calling machinery (argument checking,
+  workspace logic, BLAS calls), which dominates the runtime at small N.
+
   Ported from the batched implementation by Joshua Goings (@jjgoings),
   https://github.com/jjgoings/pfapack.
 
 ****************************************************************************/
 
+#include <math.h>
 #include <string.h>
 
 #include "commondefs.h"
@@ -82,6 +89,164 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+/* Below this size the hand-rolled Parlett-Reid kernels beat the Fortran
+   path; above it LAPACK's blocked algorithms win. */
+#define PF_SMALL_N_MAX 24
+
+#define A(i, j) a[(size_t)(i) * n + (j)]
+
+/* Expand the UPLO triangle of a row-major skew-symmetric matrix into a
+   full scratch matrix, referencing only that triangle. Writes are kept
+   linear; the mirrored values are read back from the scratch rows
+   already filled, which stay in L1 at these sizes. */
+static void pf_small_fill_d(double *a, const double *src, int n, char uplo)
+{
+    int i, j;
+    if (uplo == 'U') {
+        for (i = 0; i < n; i++) {
+            const double *srow = src + (size_t)i * n;
+            for (j = 0; j < i; j++) A(i, j) = -A(j, i);
+            A(i, i) = 0.0;
+            for (j = i + 1; j < n; j++) A(i, j) = srow[j];
+        }
+    } else {
+        for (i = 0; i < n; i++) {
+            const double *srow = src + (size_t)i * n;
+            for (j = 0; j < i; j++) A(i, j) = srow[j];
+            A(i, i) = 0.0;
+            for (j = i + 1; j < n; j++) A(i, j) = -src[(size_t)j * n + i];
+        }
+    }
+}
+
+/* Parlett-Reid LTL^T elimination with partial pivoting on a full
+   row-major skew-symmetric matrix (destroyed). Mirrors pfaffian_LTL
+   from pfapack/pfaffian.py. N must be even. */
+static double pf_small_d(double *a, int n)
+{
+    double tau[PF_SMALL_N_MAX], col[PF_SMALL_N_MAX];
+    double pfaff = 1.0;
+    int i, j, k;
+
+    for (k = 0; k + 1 < n; k += 2) {
+        /* pivot: largest |A[k+1:, k]| */
+        int kp = k + 1;
+        double mx = fabs(A(k + 1, k));
+        for (i = k + 2; i < n; i++) {
+            double v = fabs(A(i, k));
+            if (v > mx) { mx = v; kp = i; }
+        }
+        if (kp != k + 1) {
+            for (j = k; j < n; j++) {
+                double t = A(k + 1, j); A(k + 1, j) = A(kp, j); A(kp, j) = t;
+            }
+            for (i = k; i < n; i++) {
+                double t = A(i, k + 1); A(i, k + 1) = A(i, kp); A(i, kp) = t;
+            }
+            pfaff = -pfaff;
+        }
+        if (A(k + 1, k) == 0.0) return 0.0;
+        pfaff *= A(k, k + 1);
+        if (k + 2 < n) {
+            /* rank-2 update of the trailing block:
+               A[k+2:,k+2:] += tau (x) col - col (x) tau,
+               tau = A[k, k+2:] / A[k, k+1], col = A[k+2:, k+1] */
+            double inv_piv = 1.0 / A(k, k + 1);
+            for (j = k + 2; j < n; j++) {
+                tau[j] = A(k, j) * inv_piv;
+                col[j] = A(j, k + 1);
+            }
+            for (i = k + 2; i < n; i++) {
+                double ti = tau[i], ci = col[i];
+                double *row = &A(i, 0);
+                for (j = k + 2; j < n; j++)
+                    row[j] += ti * col[j] - ci * tau[j];
+            }
+        }
+    }
+    return pfaff;
+}
+
+/* Complex twin of the above. Needs native complex arithmetic, so it is
+   only available with C99 or C++ complex; the STRUCT_COMPLEX fallback
+   keeps using the Fortran path. */
+#if defined(C99_COMPLEX) || defined(CPLUSPLUS_COMPLEX)
+#define PF_HAVE_SMALL_Z 1
+
+static double pf_small_cabs1(doublecmplx x)
+{
+    return fabs(real(x)) + fabs(imag(x));
+}
+
+static void pf_small_fill_z(doublecmplx *a, const doublecmplx *src, int n,
+                            char uplo)
+{
+    int i, j;
+    if (uplo == 'U') {
+        for (i = 0; i < n; i++) {
+            const doublecmplx *srow = src + (size_t)i * n;
+            for (j = 0; j < i; j++) A(i, j) = -A(j, i);
+            A(i, i) = doublecmplx_zero;
+            for (j = i + 1; j < n; j++) A(i, j) = srow[j];
+        }
+    } else {
+        for (i = 0; i < n; i++) {
+            const doublecmplx *srow = src + (size_t)i * n;
+            for (j = 0; j < i; j++) A(i, j) = srow[j];
+            A(i, i) = doublecmplx_zero;
+            for (j = i + 1; j < n; j++) A(i, j) = -src[(size_t)j * n + i];
+        }
+    }
+}
+
+static doublecmplx pf_small_z(doublecmplx *a, int n)
+{
+    doublecmplx tau[PF_SMALL_N_MAX], col[PF_SMALL_N_MAX];
+    doublecmplx pfaff = doublecmplx_one;
+    int i, j, k;
+
+    for (k = 0; k + 1 < n; k += 2) {
+        int kp = k + 1;
+        double mx = pf_small_cabs1(A(k + 1, k));
+        for (i = k + 2; i < n; i++) {
+            double v = pf_small_cabs1(A(i, k));
+            if (v > mx) { mx = v; kp = i; }
+        }
+        if (kp != k + 1) {
+            for (j = k; j < n; j++) {
+                doublecmplx t = A(k + 1, j);
+                A(k + 1, j) = A(kp, j);
+                A(kp, j) = t;
+            }
+            for (i = k; i < n; i++) {
+                doublecmplx t = A(i, k + 1);
+                A(i, k + 1) = A(i, kp);
+                A(i, kp) = t;
+            }
+            pfaff = -pfaff;
+        }
+        if (mx == 0.0) return doublecmplx_zero;
+        pfaff *= A(k, k + 1);
+        if (k + 2 < n) {
+            doublecmplx inv_piv = doublecmplx_one / A(k, k + 1);
+            for (j = k + 2; j < n; j++) {
+                tau[j] = A(k, j) * inv_piv;
+                col[j] = A(j, k + 1);
+            }
+            for (i = k + 2; i < n; i++) {
+                doublecmplx ti = tau[i], ci = col[i];
+                doublecmplx *row = &A(i, 0);
+                for (j = k + 2; j < n; j++)
+                    row[j] += ti * col[j] - ci * tau[j];
+            }
+        }
+    }
+    return pfaff;
+}
+#endif /* C99_COMPLEX || CPLUSPLUS_COMPLEX */
+
+#undef A
 
 int skpfa_batched_d(int batch_size, int N,
                     const double *A_batch, double *PFAFF_batch,
@@ -100,6 +265,22 @@ int skpfa_batched_d(int batch_size, int N,
 
     if (N == 0) {
         for (i = 0; i < batch_size; i++) PFAFF_batch[i] = 1.0;
+        return 0;
+    }
+
+    if (N % 2 != 0) {
+        for (i = 0; i < batch_size; i++) PFAFF_batch[i] = 0.0;
+        return 0;
+    }
+
+    if (N <= PF_SMALL_N_MAX && mthd == 'P') {
+        double scratch[PF_SMALL_N_MAX * PF_SMALL_N_MAX];
+        const size_t matrix_elems = (size_t)N * (size_t)N;
+        for (i = 0; i < batch_size; i++) {
+            pf_small_fill_d(scratch, A_batch + (size_t)i * matrix_elems,
+                            N, uplo);
+            PFAFF_batch[i] = pf_small_d(scratch, N);
+        }
         return 0;
     }
 
@@ -183,6 +364,24 @@ int skpfa_batched_z(int batch_size, int N,
         for (i = 0; i < batch_size; i++) PFAFF_batch[i] = doublecmplx_one;
         return 0;
     }
+
+    if (N % 2 != 0) {
+        for (i = 0; i < batch_size; i++) PFAFF_batch[i] = doublecmplx_zero;
+        return 0;
+    }
+
+#ifdef PF_HAVE_SMALL_Z
+    if (N <= PF_SMALL_N_MAX && mthd == 'P') {
+        doublecmplx scratch[PF_SMALL_N_MAX * PF_SMALL_N_MAX];
+        const size_t matrix_elems = (size_t)N * (size_t)N;
+        for (i = 0; i < batch_size; i++) {
+            pf_small_fill_z(scratch, A_batch + (size_t)i * matrix_elems,
+                            N, uplo);
+            PFAFF_batch[i] = pf_small_z(scratch, N);
+        }
+        return 0;
+    }
+#endif
 
     /* Row-major input read as column-major is A^T, whose data lives in
        the opposite triangle; the sign is fixed up after the fact. */
