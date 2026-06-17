@@ -128,10 +128,26 @@ def _init(which):
     return func
 
 
+def _init_batched(which, dtype):
+    func = getattr(lib, which)
+    func.restype = ctypes.c_int  # result type
+    func.argtypes = [
+        ctypes.c_int,  # batch_size
+        ctypes.c_int,  # N
+        ndpointer(dtype, flags="C_CONTIGUOUS"),  # A_batch
+        ndpointer(dtype, flags="C_CONTIGUOUS"),  # PFAFF_batch
+        ctypes.c_char_p,  # UPLO
+        ctypes.c_char_p,  # MTHD
+    ]
+    return func
+
+
 skpfa_d = _init("skpfa_d")  # Pfaffian for real double
 skpf10_d = _init("skpf10_d")
 skpfa_z = _init("skpfa_z")  # Pfaffian for complex double
 skpf10_z = _init("skpf10_z")
+skpfa_batched_d = _init_batched("skpfa_batched_d", np.float64)
+skpfa_batched_z = _init_batched("skpfa_batched_z", np.complex128)
 
 
 def from_exp(x, exp):
@@ -239,3 +255,80 @@ def pfaffian(
     if success != 0:
         raise ComputationError(f"PFAPACK returned error code {success}")
     return result
+
+
+def pfaffian_batched(
+    matrices: np.ndarray,
+    uplo: str = "U",
+    method: str = "P",
+) -> np.ndarray:
+    """Compute the Pfaffian of a batch of skew-symmetric matrices.
+
+    Equivalent to calling :func:`pfaffian` on every matrix, but much
+    faster for batches of many small matrices because the LAPACK
+    workspace is allocated once for the whole batch.
+
+    Ported from the batched implementation by Joshua Goings (@jjgoings),
+    https://github.com/jjgoings/pfapack.
+
+    Parameters
+    ----------
+    matrices : numpy.ndarray
+        Array of shape ``(..., N, N)`` holding skew-symmetric matrices.
+        Real input is computed in double precision, complex input in
+        complex double precision; other dtypes are upcast.
+    uplo : str
+        If 'U' ('L'), the upper (lower) triangle of each matrix is used.
+    method : str
+        If 'P' ('H'), the Parley-Reid (Householder) algorithm is used.
+
+    Returns
+    -------
+    numpy.ndarray
+        Array of shape ``(...,)`` with the Pfaffian of each matrix
+        (a scalar if a single 2D matrix was passed). For matrices of
+        odd dimension the Pfaffian is 0.
+
+    Raises
+    ------
+    InvalidDimensionError
+        If the input is not an array of square matrices.
+    InvalidParameterError
+        If uplo or method parameters are invalid.
+    ComputationError
+        If the computation fails.
+    """
+    if uplo not in ("U", "L"):
+        raise InvalidParameterError(f"'uplo' must be 'U' or 'L', got {uplo!r}")
+    if method not in ("P", "H"):
+        raise InvalidParameterError(f"'method' must be 'P' or 'H', got {method!r}")
+
+    matrices = np.asarray(matrices)
+    if matrices.ndim < 2 or matrices.shape[-1] != matrices.shape[-2]:
+        raise InvalidDimensionError(
+            "Expected an array of square matrices with shape (..., N, N), "
+            f"got shape {matrices.shape}"
+        )
+
+    n = matrices.shape[-1]
+    batch_shape = matrices.shape[:-2]
+    batch_size = int(np.prod(batch_shape, dtype=np.int64))
+
+    if np.iscomplexobj(matrices):
+        dtype = np.complex128
+        func = skpfa_batched_z
+    else:
+        dtype = np.float64
+        func = skpfa_batched_d
+
+    # Copies only if the dtype or memory layout requires it.
+    a = np.ascontiguousarray(matrices, dtype=dtype).reshape(batch_size, n, n)
+    pfaffians = np.empty(batch_size, dtype=dtype)
+
+    if batch_size > 0:
+        success = func(batch_size, n, a, pfaffians, uplo.encode(), method.encode())
+        if success != 0:
+            raise ComputationError(f"PFAPACK returned error code {success}")
+
+    # For 2D input batch_shape is (), so this returns a scalar.
+    return pfaffians.reshape(batch_shape)[()]

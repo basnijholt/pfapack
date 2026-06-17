@@ -14,6 +14,11 @@ int skpfa_c(int, floatcmplx *, floatcmplx *,
 int skpfa_z(int, doublecmplx *, doublecmplx *,
 	    const char *, const char *);
 
+int skpfa_batched_d(int, int, const double *, double *,
+		    const char *, const char *);
+int skpfa_batched_z(int, int, const doublecmplx *, doublecmplx *,
+		    const char *, const char *);
+
 int skpf10_s(int, float *, float *, const char *, const char *);
 int skpf10_d(int, double *, double *, const char *, const char *);
 int skpf10_c(int, floatcmplx *, floatcmplx *,

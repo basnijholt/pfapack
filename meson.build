@@ -148,6 +148,7 @@ fortran_sources = files(
 # C sources
 c_sources = files(
   join_paths(pfapack_dir, 'c_interface', 'skpfa.c'),
+  join_paths(pfapack_dir, 'c_interface', 'skpfa_batched.c'),
   join_paths(pfapack_dir, 'c_interface', 'skpf10.c'),
   join_paths(pfapack_dir, 'c_interface', 'skbpfa.c'),
   join_paths(pfapack_dir, 'c_interface', 'skbpf10.c'),

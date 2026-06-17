@@ -42,6 +42,17 @@ pfa2 = cpf(A, method="H")
 print(pfa1, pfa2)
 ```
 
+For many small matrices, use the batched interface, which is significantly
+faster than looping because workspace is allocated once per batch:
+```python
+import numpy
+from pfapack.ctypes import pfaffian_batched
+
+matrices = numpy.random.rand(1000, 8, 8)
+matrices = matrices - matrices.transpose(0, 2, 1)
+pfaffians = pfaffian_batched(matrices)  # shape (1000,)
+```
+
 > [!NOTE]
 > Building from source on Windows (only needed if no wheel is available for your platform) requires MSYS2 with the MinGW64 toolchain (`mingw-w64-x86_64-gcc-fortran`, `mingw-w64-x86_64-openblas`, and `mingw-w64-x86_64-pkgconf`).
 
