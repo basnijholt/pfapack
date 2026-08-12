@@ -19,18 +19,18 @@ jobs:
         shell: bash -l {0}
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v4.4.0
       with:
         submodules: recursive
 
-    - uses: actions/setup-python@v5
+    - uses: actions/setup-python@v5.6.0
       with:
         python-version: "${{ matrix.python-version }}"
 
     # On Windows the MSYS2 toolchain below is used instead; the gcc that
     # this action installs via chocolatey cannot find its own headers
     # (fatal error: stdlib.h) when invoked through the chocolatey shims.
-    - uses: fortran-lang/setup-fortran@v1
+    - uses: fortran-lang/setup-fortran@v1.10.0
       if: runner.os != 'Windows'
       id: setup-fortran
       with:
@@ -45,7 +45,7 @@ jobs:
     - name: Install system dependencies (Windows)
       if: matrix.os == 'windows-latest'
       id: msys2
-      uses: msys2/setup-msys2@v2
+      uses: msys2/setup-msys2@v2.32.0
       with:
         msystem: MINGW64
         # pkgconf lets meson find openblas.pc, skipping its flaky CMake probe
@@ -84,6 +84,6 @@ jobs:
 
     - name: Upload coverage to Codecov
       if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.13'
-      uses: codecov/codecov-action@v5
+      uses: codecov/codecov-action@v5.5.5
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
